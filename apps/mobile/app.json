@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "GYMFLOW",
+    "slug": "gymflow",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "gymflow",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#08080F"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.gymflow.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#08080F"
+      },
+      "package": "com.gymflow.app"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      ["expo-notifications", { "color": "#00E5FF" }]
+    ],
+    "experiments": { "typedRoutes": true }
+  }
+}

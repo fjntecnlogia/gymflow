@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-canvas: #08080F;
+  --bg-surface: #111119;
+  --bg-elevated: #1A1A26;
+  --border-default: #2A2A3A;
+  --color-primary: #00E5FF;
+  --color-secondary: #FF6B00;
+  --color-success: #00FF87;
+  --color-danger: #FF4466;
+  --text-muted: #8888AA;
+}
+
+* { box-sizing: border-box; }
+
+body { background: var(--bg-canvas); color: #fff; }
+
+.gradient-text {
+  background: linear-gradient(135deg, #00E5FF, #0066FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-btn {
+  background: linear-gradient(135deg, #00E5FF, #0066FF);
+  transition: filter 0.2s;
+}
+.gradient-btn:hover { filter: brightness(1.1); }
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+}
+
+.scrollbar-thin::-webkit-scrollbar { width: 4px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #2A2A3A; border-radius: 4px; }
