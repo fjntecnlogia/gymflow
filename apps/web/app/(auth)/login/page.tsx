@@ -7,10 +7,13 @@ import { Mail, Lock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-)
+// client criado dentro do componente para evitar erro no build estático
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
+  )
+}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -22,6 +25,7 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     try {
+      const supabase = getSupabase()
       const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha })
       if (error) throw error
       if (data.session) {

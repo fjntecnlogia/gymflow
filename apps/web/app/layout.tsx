@@ -6,6 +6,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://gymflow.vercel.app'),
   title: 'GYMFLOW — Sua academia. Sob controle.',
   description: 'Sistema de gestão completo para academias: controle de acesso, financeiro e app do aluno.',
   openGraph: {
