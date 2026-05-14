@@ -6,11 +6,14 @@
     "outDir": "dist",
     "rootDir": "src",
     "strict": false,
+    "noEmitOnError": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
