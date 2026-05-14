@@ -7,12 +7,12 @@ import { Mail, Lock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@supabase/supabase-js'
 
-// client criado dentro do componente para evitar erro no build estático
+// URLs hardcoded para evitar problema de encoding nas env vars do Vercel
+const SUPABASE_URL = 'https://gfxjehsjwwtlrhcjvkfr.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmeGplaHNqd3d0bHJoY2p2a2ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MTkzNzgsImV4cCI6MjA5NDI5NTM3OH0.6CF-JQYynO84ZUfn2iHmhLc3U-g7xc2jAXuga38FftI'
+
 function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
-  )
+  return createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 }
 
 export default function LoginPage() {
