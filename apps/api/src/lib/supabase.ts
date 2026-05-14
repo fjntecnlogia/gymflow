@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import WebSocket from 'ws'
 
 // Lazy initialization — evita crash no startup quando vars não estão configuradas
 let _supabase: ReturnType<typeof createClient> | null = null
@@ -10,7 +11,10 @@ export function getSupabaseClient() {
     if (!url || !key || url === 'PREENCHER' || key === 'PREENCHER') {
       throw new Error('SUPABASE_URL e SUPABASE_SERVICE_KEY devem ser configurados')
     }
-    _supabase = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } })
+    _supabase = createClient(url, key, {
+      auth: { autoRefreshToken: false, persistSession: false },
+      realtime: { transport: WebSocket } as any,
+    })
   }
   return _supabase
 }
