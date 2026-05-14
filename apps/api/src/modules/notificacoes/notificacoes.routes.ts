@@ -10,7 +10,7 @@ export async function notificacoesRoutes(app: FastifyInstance) {
 
   app.post('/whatsapp/teste', async (req, reply) => {
     const { telefone, mensagem } = req.body as { telefone: string; mensagem: string }
-    await wa.enviarMensagem(telefone, mensagem)
+    await wa.enviarMensagem({ telefone, mensagem })
     return { ok: true }
   })
 

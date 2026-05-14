@@ -49,12 +49,16 @@ async function processarVencimentos() {
 
   for (const m of vencendoEm3) {
     if (m.aluno.telefone) {
-      await wa.enviarVencimento(m.aluno.telefone, {
+      await wa.enviarVencimento({
+        telefone: m.aluno.telefone,
         nomeAluno: m.aluno.nome,
         plano: m.plano.nome,
         valor: Number(m.valorPago),
         dataVencimento: dayjs(m.dataVencimento).format('DD/MM/YYYY'),
         linkPagamento: '',
+        academiaId: m.academiaId,
+        alunoId: m.alunoId,
+        diasRestantes: dayjs(m.dataVencimento).diff(dayjs(), 'day'),
       })
     }
   }
@@ -68,7 +72,14 @@ async function processarVencimentos() {
     await prisma.matricula.update({ where: { id: m.id }, data: { status: 'VENCIDA' } })
     await prisma.aluno.update({ where: { id: m.alunoId }, data: { status: 'INADIMPLENTE' } })
     if (m.aluno.telefone) {
-      await wa.enviarBloqueio(m.aluno.telefone, m.aluno.nome)
+      await wa.enviarInadimplencia({
+        telefone: m.aluno.telefone,
+        nomeAluno: m.aluno.nome,
+        diasAtraso: dayjs().diff(dayjs(m.dataVencimento), 'day'),
+        linkPagamento: '',
+        academiaId: m.academiaId,
+        alunoId: m.alunoId,
+      })
     }
   }
 }
@@ -86,10 +97,13 @@ async function processarReengajamento() {
 
   for (const aluno of semAcesso) {
     if (aluno.telefone) {
-      await wa.enviarMensagem(
-        aluno.telefone,
-        `💪 Ei, *${aluno.nome}*! Faz 7 dias que você não treina.\n\nSua academia está te esperando. Bora voltar! 🏋️\n\n_GYMFLOW_`,
-      )
+      await wa.enviarMensagem({
+        telefone: aluno.telefone,
+        mensagem: `💪 Ei, *${aluno.nome}*! Faz 7 dias que você não treina.\n\nSua academia está te esperando. Bora voltar! 🏋️\n\n_GYMFLOW_`,
+        academiaId: aluno.academiaId,
+        alunoId: aluno.id,
+        tipo: 'reengajamento',
+      })
     }
   }
 }
