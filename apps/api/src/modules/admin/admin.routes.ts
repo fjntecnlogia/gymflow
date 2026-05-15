@@ -17,7 +17,9 @@ export async function adminRoutes(app: FastifyInstance) {
   })
 
   app.get('/academias', async (req) => {
-    const { page = 1, limit = 20 } = req.query as any
+    const q = req.query as any
+    const page  = Number(q.page  ?? 1)
+    const limit = Number(q.limit ?? 20)
     return prisma.academia.findMany({
       skip: (page - 1) * limit,
       take: limit,
