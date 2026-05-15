@@ -1,5 +1,4 @@
 import axios, { AxiosInstance } from 'axios'
-import FormData from 'form-data'
 
 export interface ReconhecimentoResult {
   encontrado: boolean
@@ -44,12 +43,12 @@ export class FacialService {
       const { buffer, mimeType } = this.base64ToBuffer(fotoBase64)
       const ext = mimeType === 'image/png' ? 'png' : 'jpg'
 
-      const form = new FormData()
-      form.append('file', buffer, { filename: `face.${ext}`, contentType: mimeType })
+      // Usa FormData nativo do Node 18+
+      const form = new (globalThis as any).FormData()
+      const blob = new (globalThis as any).Blob([buffer], { type: mimeType })
+      form.append('file', blob, `face.${ext}`)
 
-      await this.api.post(`/api/v1/recognition/faces?subject=${alunoId}`, form, {
-        headers: form.getHeaders(),
-      })
+      await this.api.post(`/api/v1/recognition/faces?subject=${alunoId}`, form)
 
       return { ok: true }
     } catch (err: any) {
@@ -77,13 +76,13 @@ export class FacialService {
       const { buffer, mimeType } = this.base64ToBuffer(fotoBase64)
       const ext = mimeType === 'image/png' ? 'png' : 'jpg'
 
-      const form = new FormData()
-      form.append('file', buffer, { filename: `face.${ext}`, contentType: mimeType })
+      const form = new (globalThis as any).FormData()
+      const blob = new (globalThis as any).Blob([buffer], { type: mimeType })
+      form.append('file', blob, `face.${ext}`)
 
       const { data } = await this.api.post(
         `/api/v1/recognition/recognize?limit=1&det_prob_threshold=0.8&prediction_count=1`,
         form,
-        { headers: form.getHeaders() },
       )
 
       const resultado = data?.result?.[0]
