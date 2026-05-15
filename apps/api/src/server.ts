@@ -26,11 +26,21 @@ const app = Fastify({
 
 async function bootstrap() {
   await app.register(cors, {
-    origin: [
-      process.env.WEB_URL ?? 'http://localhost:3000',
-      'http://localhost:3000',
-      'http://localhost:19006',
-    ],
+    origin: (origin, cb) => {
+      const allowed = [
+        process.env.WEB_URL ?? '',
+        'https://web-gules-phi-97.vercel.app',
+        'http://localhost:3000',
+        'http://localhost:19006',
+      ].filter(Boolean)
+
+      // Permite qualquer subdomínio da Vercel (previews) e origens nulas (curl/Postman)
+      if (!origin || allowed.includes(origin) || origin.endsWith('.vercel.app')) {
+        cb(null, true)
+      } else {
+        cb(null, false)
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   })
