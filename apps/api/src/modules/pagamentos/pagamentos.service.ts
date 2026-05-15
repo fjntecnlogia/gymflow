@@ -97,6 +97,85 @@ export class PagamentosService {
     return pagamento
   }
 
+  // ─── Registrar pagamento manual (dinheiro, PIX, débito, etc.) ───────────────
+  async registrarManual(academiaId: string, dados: {
+    alunoId: string
+    matriculaId?: string
+    valor: number
+    metodo: string
+    descricao?: string
+    dataVencimento?: Date
+    dataPagamento?: Date
+  }) {
+    const aluno = await prisma.aluno.findFirst({ where: { id: dados.alunoId, academiaId } })
+    if (!aluno) throw new Error('Aluno não encontrado')
+
+    const pagamento = await prisma.pagamento.create({
+      data: {
+        academiaId,
+        alunoId: dados.alunoId,
+        matriculaId: dados.matriculaId,
+        valor: dados.valor,
+        metodo: dados.metodo as any,
+        status: dados.dataPagamento ? 'PAGO' : 'PENDENTE',
+        dataVencimento: dados.dataVencimento ?? new Date(),
+        dataPagamento: dados.dataPagamento,
+        descricao: dados.descricao ?? 'Mensalidade',
+      },
+      include: { aluno: { select: { id: true, nome: true } } },
+    })
+
+    // Se já está marcado como pago, atualiza status do aluno
+    if (dados.dataPagamento) {
+      await prisma.aluno.update({ where: { id: dados.alunoId }, data: { status: 'ATIVO' } })
+    }
+
+    return pagamento
+  }
+
+  // ─── Marcar pagamento como pago ──────────────────────────────────────────────
+  async marcarComoPago(academiaId: string, pagamentoId: string) {
+    const pagamento = await prisma.pagamento.findFirst({ where: { id: pagamentoId, academiaId } })
+    if (!pagamento) throw new Error('Pagamento não encontrado')
+    if (pagamento.status === 'PAGO') throw new Error('Pagamento já confirmado')
+
+    const [pag] = await Promise.all([
+      prisma.pagamento.update({
+        where: { id: pagamentoId },
+        data: { status: 'PAGO', dataPagamento: new Date() },
+        include: { aluno: { select: { id: true, nome: true } } },
+      }),
+      prisma.aluno.update({ where: { id: pagamento.alunoId }, data: { status: 'ATIVO' } }),
+    ])
+
+    // Renovar matrícula se vinculada
+    if (pagamento.matriculaId) {
+      const mat = await prisma.matricula.findUnique({
+        where: { id: pagamento.matriculaId }, include: { plano: true },
+      })
+      if (mat) {
+        const base = dayjs(mat.dataVencimento).isAfter(dayjs()) ? mat.dataVencimento : new Date()
+        await prisma.matricula.update({
+          where: { id: mat.id },
+          data: { status: 'ATIVA', dataVencimento: dayjs(base).add(mat.plano.duracaoDias, 'day').toDate() },
+        })
+      }
+    }
+
+    return pag
+  }
+
+  // ─── Cancelar/estornar pagamento ─────────────────────────────────────────────
+  async cancelar(academiaId: string, pagamentoId: string) {
+    const pagamento = await prisma.pagamento.findFirst({ where: { id: pagamentoId, academiaId } })
+    if (!pagamento) throw new Error('Pagamento não encontrado')
+
+    return prisma.pagamento.update({
+      where: { id: pagamentoId },
+      data: { status: pagamento.status === 'PAGO' ? 'ESTORNADO' : 'CANCELADO' },
+    })
+  }
+
   async resumoFinanceiro(academiaId: string) {
     const inicioMes = dayjs().startOf('month').toDate()
     const fimMes = dayjs().endOf('month').toDate()

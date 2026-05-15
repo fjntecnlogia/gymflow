@@ -68,6 +68,50 @@ export async function pagamentosRoutes(app: FastifyInstance) {
     return reply.status(201).send(pagamento)
   })
 
+  // ─── Registrar pagamento manual ─────────────────────────────────────────────
+  app.post('/manual', async (req, reply) => {
+    const academiaId = (req as any).academiaId
+    const schema = z.object({
+      alunoId:       z.string(),
+      matriculaId:   z.string().optional(),
+      valor:         z.number().positive(),
+      metodo:        z.enum(['DINHEIRO', 'PIX', 'CARTAO_CREDITO', 'CARTAO_DEBITO', 'BOLETO']),
+      descricao:     z.string().optional(),
+      dataVencimento: z.string().optional(),
+      jaFoiPago:     z.boolean().default(false),
+    })
+    const dados = schema.parse(req.body)
+    const pagamento = await service.registrarManual(academiaId, {
+      ...dados,
+      dataVencimento: dados.dataVencimento ? new Date(dados.dataVencimento) : undefined,
+      dataPagamento: dados.jaFoiPago ? new Date() : undefined,
+    })
+    return reply.status(201).send(pagamento)
+  })
+
+  // ─── Marcar como pago ────────────────────────────────────────────────────────
+  app.patch('/:id/pagar', async (req, reply) => {
+    const academiaId = (req as any).academiaId
+    const { id } = req.params as { id: string }
+    try {
+      const pag = await service.marcarComoPago(academiaId, id)
+      return pag
+    } catch (err: any) {
+      return reply.status(400).send({ error: err.message })
+    }
+  })
+
+  // ─── Cancelar/estornar ───────────────────────────────────────────────────────
+  app.patch('/:id/cancelar', async (req, reply) => {
+    const academiaId = (req as any).academiaId
+    const { id } = req.params as { id: string }
+    try {
+      return await service.cancelar(academiaId, id)
+    } catch (err: any) {
+      return reply.status(400).send({ error: err.message })
+    }
+  })
+
   app.get('/resumo', async (req) => {
     return service.resumoFinanceiro((req as any).academiaId)
   })
