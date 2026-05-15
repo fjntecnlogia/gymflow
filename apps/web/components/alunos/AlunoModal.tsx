@@ -2,8 +2,10 @@
 import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 import { X } from 'lucide-react'
 import { api, getApiError } from '@/lib/api'
+import { mascaraCPF, mascaraTelefone, apenasNumeros } from '@/lib/masks'
 import toast from 'react-hot-toast'
 
 interface AlunoModalProps {
@@ -24,8 +26,9 @@ export function AlunoModal({ open, onClose, onSaved, aluno }: AlunoModalProps) {
       setForm({
         nome: aluno.nome ?? '',
         email: aluno.email ?? '',
-        telefone: aluno.telefone ?? '',
-        cpf: aluno.cpf ?? '',
+        // Exibe com máscara se vier sem
+        telefone: aluno.telefone ? mascaraTelefone(aluno.telefone) : '',
+        cpf: aluno.cpf ? mascaraCPF(aluno.cpf) : '',
         dataNascimento: aluno.dataNascimento ? aluno.dataNascimento.slice(0, 10) : '',
         observacoes: aluno.observacoes ?? '',
       })
@@ -40,11 +43,18 @@ export function AlunoModal({ open, onClose, onSaved, aluno }: AlunoModalProps) {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     if (!form.nome || !form.telefone) return toast.error('Nome e telefone são obrigatórios')
+
+    const telefoneLimpo = apenasNumeros(form.telefone)
+    if (telefoneLimpo.length < 10) return toast.error('Telefone incompleto — mínimo 10 dígitos')
+
     setLoading(true)
     try {
       const payload = {
-        ...form,
-        // Prisma exige ISO-8601 completo (com hora) — "YYYY-MM-DD" → "YYYY-MM-DDT00:00:00.000Z"
+        nome: form.nome,
+        email: form.email || undefined,
+        telefone: telefoneLimpo,           // envia só dígitos para a API
+        cpf: apenasNumeros(form.cpf) || undefined,
+        observacoes: form.observacoes || undefined,
         dataNascimento: form.dataNascimento
           ? new Date(form.dataNascimento + 'T12:00:00.000Z').toISOString()
           : undefined,
@@ -80,14 +90,32 @@ export function AlunoModal({ open, onClose, onSaved, aluno }: AlunoModalProps) {
 
         <form onSubmit={handleSave} className="space-y-4">
           <Input label="Nome completo *" placeholder="João Silva" value={form.nome} onChange={set('nome')} required />
+
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Telefone (WhatsApp) *" placeholder="11999999999" value={form.telefone} onChange={set('telefone')} required />
+            <PhoneInput
+              label="Telefone (WhatsApp) *"
+              value={form.telefone}
+              onChange={(mascara) => setForm(f => ({ ...f, telefone: mascara }))}
+              required
+            />
             <Input label="E-mail" type="email" placeholder="joao@email.com" value={form.email} onChange={set('email')} />
           </div>
+
           <div className="grid grid-cols-2 gap-3">
-            <Input label="CPF" placeholder="000.000.000-00" value={form.cpf} onChange={set('cpf')} />
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-bold uppercase tracking-widest text-muted">CPF</label>
+              <input
+                className="w-full bg-dark-card border border-dark-border rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-muted focus:border-cyan outline-none transition-colors"
+                placeholder="000.000.000-00"
+                value={form.cpf}
+                inputMode="numeric"
+                maxLength={14}
+                onChange={e => setForm(f => ({ ...f, cpf: mascaraCPF(e.target.value) }))}
+              />
+            </div>
             <Input label="Data de Nascimento" type="date" value={form.dataNascimento} onChange={set('dataNascimento')} />
           </div>
+
           <div>
             <label className="text-xs font-bold text-muted uppercase tracking-widest block mb-1.5">Observações</label>
             <textarea
@@ -97,6 +125,7 @@ export function AlunoModal({ open, onClose, onSaved, aluno }: AlunoModalProps) {
               onChange={set('observacoes')}
             />
           </div>
+
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="ghost" fullWidth onClick={onClose}>Cancelar</Button>
             <Button type="submit" loading={loading} fullWidth>{aluno ? 'Salvar' : 'Cadastrar'}</Button>

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Save, Wifi, WifiOff, CheckCircle, XCircle, RefreshCw } from 'lucide-react'
 import { api } from '@/lib/api'
+import { mascaraTelefone, apenasNumeros } from '@/lib/masks'
 import toast from 'react-hot-toast'
 
 type Section = 'academia' | 'pix' | 'whatsapp' | 'catraca' | 'notificacoes'
@@ -124,7 +125,18 @@ export default function ConfiguracoesPage() {
               <h2 className="font-bold text-lg">Dados da Academia</h2>
               <div className="grid grid-cols-2 gap-4">
                 <Input label="Nome" value={academia?.nome ?? ''} onChange={e => setAcademia((a: any) => ({ ...a, nome: e.target.value }))} />
-                <Input label="Telefone" value={academia?.telefone ?? ''} onChange={e => setAcademia((a: any) => ({ ...a, telefone: e.target.value }))} />
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold uppercase tracking-widest text-muted">Telefone</label>
+                  <input
+                    className="w-full bg-dark-card border border-dark-border rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-muted focus:border-cyan outline-none transition-colors"
+                    type="tel"
+                    inputMode="numeric"
+                    placeholder="(XX) XXXXX-XXXX"
+                    maxLength={15}
+                    value={mascaraTelefone(academia?.telefone ?? '')}
+                    onChange={e => setAcademia((a: any) => ({ ...a, telefone: apenasNumeros(e.target.value) }))}
+                  />
+                </div>
                 <Input label="E-mail" value={academia?.email ?? ''} onChange={e => setAcademia((a: any) => ({ ...a, email: e.target.value }))} />
                 <Input label="CNPJ" value={academia?.cnpj ?? ''} onChange={e => setAcademia((a: any) => ({ ...a, cnpj: e.target.value }))} />
               </div>

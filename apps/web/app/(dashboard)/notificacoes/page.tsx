@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Wifi, WifiOff, QrCode, RefreshCw, Send, MessageCircle, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import { api } from '@/lib/api'
+import { mascaraTelefone, apenasNumeros } from '@/lib/masks'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
 
@@ -93,7 +94,7 @@ export default function NotificacoesPage() {
     setEnviandoTeste(true)
     try {
       const { data } = await api.post('/notificacoes/whatsapp/teste', {
-        telefone: testeFone,
+        telefone: apenasNumeros(testeFone),
         mensagem: testeMsg,
       })
       if (data.ok) {
@@ -231,9 +232,12 @@ export default function NotificacoesPage() {
               <label className="text-xs text-muted mb-1 block">Telefone (com DDD)</label>
               <input
                 className="input w-full"
-                placeholder="Ex: 11999887766"
+                type="tel"
+                inputMode="numeric"
+                placeholder="(XX) XXXXX-XXXX"
+                maxLength={15}
                 value={testeFone}
-                onChange={e => setTesteFone(e.target.value)}
+                onChange={e => setTesteFone(mascaraTelefone(e.target.value))}
               />
             </div>
             <div>
