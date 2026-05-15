@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Plus, X, Edit, Trash2, Package } from 'lucide-react'
-import { api } from '@/lib/api'
+import { api, getApiError } from '@/lib/api'
 import toast from 'react-hot-toast'
 
 const TIPOS = ['DIARIO', 'SEMANAL', 'MENSAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL']
@@ -46,7 +46,7 @@ function PlanoModal({ open, onClose, onSaved, plano }: { open: boolean; onClose:
       else { await api.post('/planos', payload); toast.success('Plano criado!') }
       onSaved(); onClose()
     } catch (err: any) {
-      toast.error(err?.response?.data?.error ?? 'Erro ao salvar plano')
+      toast.error(getApiError(err))
     } finally { setLoading(false) }
   }
 

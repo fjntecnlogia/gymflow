@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { X } from 'lucide-react'
-import { api } from '@/lib/api'
+import { api, getApiError } from '@/lib/api'
 import toast from 'react-hot-toast'
 
 interface MatricularModalProps {
@@ -34,7 +34,7 @@ export function MatricularModal({ open, onClose, onSaved, aluno }: MatricularMod
       onSaved()
       onClose()
     } catch (err: any) {
-      toast.error(err?.response?.data?.error ?? 'Erro ao matricular')
+      toast.error(getApiError(err))
     } finally {
       setLoading(false)
     }

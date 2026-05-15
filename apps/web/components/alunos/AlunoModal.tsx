@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { X } from 'lucide-react'
-import { api } from '@/lib/api'
+import { api, getApiError } from '@/lib/api'
 import toast from 'react-hot-toast'
 
 interface AlunoModalProps {
@@ -53,7 +53,7 @@ export function AlunoModal({ open, onClose, onSaved, aluno }: AlunoModalProps) {
       onSaved()
       onClose()
     } catch (err: any) {
-      toast.error(err?.response?.data?.error ?? 'Erro ao salvar aluno')
+      toast.error(getApiError(err))
     } finally {
       setLoading(false)
     }
