@@ -4,12 +4,20 @@ import { usePathname } from 'next/navigation'
 import { clsx } from 'clsx'
 import {
   LayoutDashboard, Users, ShieldCheck, DollarSign,
-  Calendar, BarChart2, Bell, Settings, LogOut,
+  Calendar, BarChart2, Bell, Settings, LogOut, Package,
 } from 'lucide-react'
+import { createClient } from '@supabase/supabase-js'
+import { useRouter } from 'next/navigation'
+
+const supabase = createClient(
+  'https://gfxjehsjwwtlrhcjvkfr.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmeGplaHNqd3d0bHJoY2p2a2ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MTkzNzgsImV4cCI6MjA5NDI5NTM3OH0.6CF-JQYynO84ZUfn2iHmhLc3U-g7xc2jAXuga38FftI'
+)
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/alunos', label: 'Alunos', icon: Users },
+  { href: '/planos', label: 'Planos', icon: Package },
   { href: '/acesso', label: 'Controle Acesso', icon: ShieldCheck },
   { href: '/financeiro', label: 'Financeiro', icon: DollarSign },
   { href: '/agenda', label: 'Agenda', icon: Calendar },
@@ -19,6 +27,13 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  async function handleLogout() {
+    await supabase.auth.signOut()
+    localStorage.removeItem('gymflow_token')
+    router.push('/login')
+  }
 
   return (
     <aside className="w-[220px] min-h-screen bg-[#0D0D1A] border-r border-dark-border flex flex-col">
@@ -50,7 +65,7 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-dark-border p-4">
-        <button className="flex items-center gap-3 text-sm text-muted hover:text-red transition-colors w-full px-1 py-2">
+        <button onClick={handleLogout} className="flex items-center gap-3 text-sm text-muted hover:text-red transition-colors w-full px-1 py-2">
           <LogOut size={16} />
           Sair
         </button>
