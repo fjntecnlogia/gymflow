@@ -1,10 +1,10 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
-export default function PagamentoSucessoPage() {
+function PagamentoConteudo() {
   const params = useSearchParams()
   const sessionId = params.get('session') ?? params.get('session_id')
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
@@ -55,5 +55,17 @@ export default function PagamentoSucessoPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function PagamentoSucessoPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-dark flex items-center justify-center">
+        <Loader2 size={40} className="text-cyan animate-spin" />
+      </div>
+    }>
+      <PagamentoConteudo />
+    </Suspense>
   )
 }
