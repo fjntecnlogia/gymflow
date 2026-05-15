@@ -1,4 +1,5 @@
 import { prisma } from '../../lib/prisma'
+import { prismaOp } from '../../lib/prisma-errors'
 import { CriarAlunoDTO, FiltroAlunoDTO } from './alunos.schema'
 
 export class AlunosService {
@@ -50,16 +51,11 @@ export class AlunosService {
   }
 
   async criar(academiaId: string, dados: CriarAlunoDTO) {
-    return prisma.aluno.create({
-      data: { ...dados, academiaId },
-    })
+    return prismaOp(() => prisma.aluno.create({ data: { ...dados, academiaId } }))
   }
 
   async atualizar(academiaId: string, alunoId: string, dados: Partial<CriarAlunoDTO>) {
-    return prisma.aluno.update({
-      where: { id: alunoId, academiaId },
-      data: dados,
-    })
+    return prismaOp(() => prisma.aluno.update({ where: { id: alunoId, academiaId }, data: dados }))
   }
 
   async atualizarStatus(academiaId: string, alunoId: string, status: string) {
