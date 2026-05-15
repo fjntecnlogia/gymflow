@@ -42,7 +42,13 @@ export function AlunoModal({ open, onClose, onSaved, aluno }: AlunoModalProps) {
     if (!form.nome || !form.telefone) return toast.error('Nome e telefone são obrigatórios')
     setLoading(true)
     try {
-      const payload = { ...form, dataNascimento: form.dataNascimento || undefined }
+      const payload = {
+        ...form,
+        // Prisma exige ISO-8601 completo (com hora) — "YYYY-MM-DD" → "YYYY-MM-DDT00:00:00.000Z"
+        dataNascimento: form.dataNascimento
+          ? new Date(form.dataNascimento + 'T12:00:00.000Z').toISOString()
+          : undefined,
+      }
       if (aluno) {
         await api.put(`/alunos/${aluno.id}`, payload)
         toast.success('Aluno atualizado!')
