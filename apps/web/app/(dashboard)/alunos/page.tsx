@@ -1,10 +1,10 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 import { AlunoModal } from '@/components/alunos/AlunoModal'
 import { MatricularModal } from '@/components/alunos/MatricularModal'
-import { Plus, Search, Filter, Users, Edit, UserCheck } from 'lucide-react'
+import { CadastrarFaceModal } from '@/components/alunos/CadastrarFaceModal'
+import { Plus, Search, Users, Edit, UserCheck, Camera } from 'lucide-react'
 import { api } from '@/lib/api'
 import dayjs from 'dayjs'
 import 'dayjs/locale/pt-br'
@@ -27,6 +27,7 @@ export default function AlunosPage() {
   const [loading, setLoading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [matricularOpen, setMatricularOpen] = useState(false)
+  const [faceModalAluno, setFaceModalAluno] = useState<any | null>(null)
   const [alunoSelecionado, setAlunoSelecionado] = useState<any>(null)
 
   const carregar = useCallback(async () => {
@@ -47,20 +48,9 @@ export default function AlunosPage() {
 
   useEffect(() => { carregar() }, [carregar])
 
-  function abrirEditar(aluno: any) {
-    setAlunoSelecionado(aluno)
-    setModalOpen(true)
-  }
-
-  function abrirMatricular(aluno: any) {
-    setAlunoSelecionado(aluno)
-    setMatricularOpen(true)
-  }
-
-  function novoAluno() {
-    setAlunoSelecionado(null)
-    setModalOpen(true)
-  }
+  function abrirEditar(aluno: any) { setAlunoSelecionado(aluno); setModalOpen(true) }
+  function abrirMatricular(aluno: any) { setAlunoSelecionado(aluno); setMatricularOpen(true) }
+  function novoAluno() { setAlunoSelecionado(null); setModalOpen(true) }
 
   const statusColor: Record<string, string> = {
     ATIVO: 'text-green', INADIMPLENTE: 'text-red', SUSPENSO: 'text-orange', CANCELADO: 'text-muted'
@@ -121,7 +111,7 @@ export default function AlunosPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-dark-border">
-                {['Nome', 'Telefone', 'Plano', 'Vencimento', 'Status', 'Ações'].map(h => (
+                {['Nome', 'Telefone', 'Plano', 'Vencimento', 'Status', 'Bio', 'Ações'].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-bold uppercase tracking-widest text-muted">{h}</th>
                 ))}
               </tr>
@@ -133,9 +123,14 @@ export default function AlunosPage() {
                   <tr key={a.id} className="border-b border-dark-border/40 hover:bg-white/2 transition-colors group">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan to-blue flex items-center justify-center text-dark text-xs font-bold flex-shrink-0">
-                          {a.nome.charAt(0).toUpperCase()}
-                        </div>
+                        {a.fotoUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={a.fotoUrl} alt={a.nome} className="w-7 h-7 rounded-full object-cover flex-shrink-0 border border-dark-border" />
+                        ) : (
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan to-blue flex items-center justify-center text-dark text-xs font-bold flex-shrink-0">
+                            {a.nome.charAt(0).toUpperCase()}
+                          </div>
+                        )}
                         <div>
                           <div className="font-semibold">{a.nome}</div>
                           {a.email && <div className="text-xs text-muted">{a.email}</div>}
@@ -155,6 +150,19 @@ export default function AlunosPage() {
                       <span className={`text-xs font-bold ${statusColor[a.status] ?? 'text-muted'}`}>
                         ● {a.status}
                       </span>
+                    </td>
+                    {/* Biometria */}
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => setFaceModalAluno(a)}
+                        title={a.faceId ? 'Face cadastrada — clique para atualizar' : 'Cadastrar biometria facial'}
+                        className={`flex items-center gap-1 text-xs transition-colors ${
+                          a.faceId ? 'text-green hover:text-green/80' : 'text-muted hover:text-cyan'
+                        }`}
+                      >
+                        <Camera size={13} />
+                        {a.faceId ? '✓' : '+'}
+                      </button>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -194,6 +202,13 @@ export default function AlunosPage() {
       {/* Modais */}
       <AlunoModal open={modalOpen} onClose={() => setModalOpen(false)} onSaved={carregar} aluno={alunoSelecionado} />
       <MatricularModal open={matricularOpen} onClose={() => setMatricularOpen(false)} onSaved={carregar} aluno={alunoSelecionado} />
+      {faceModalAluno && (
+        <CadastrarFaceModal
+          aluno={faceModalAluno}
+          onClose={() => setFaceModalAluno(null)}
+          onSucesso={() => { setFaceModalAluno(null); carregar() }}
+        />
+      )}
     </div>
   )
 }

@@ -1,12 +1,14 @@
 import { prisma } from '../../lib/prisma'
 import { CatracaService } from '../../integrations/catraca'
-import { WhatsAppService } from '../../integrations/whatsapp'
+import { FacialService } from '../../integrations/facial'
 import dayjs from 'dayjs'
 
 const catracaService = new CatracaService()
-const wa = new WhatsAppService()
+const facialService = new FacialService()
 
 export class AcessoService {
+
+  // ─── Acesso por QR Code ──────────────────────────────────────────────────────
   async verificarQrCode(academiaId: string, qrCodeToken: string, catracaId?: string) {
     const aluno = await prisma.aluno.findFirst({
       where: { qrCodeToken, academiaId },
@@ -29,10 +31,7 @@ export class AcessoService {
     await this.registrar({ academiaId, alunoId: aluno.id, catracaId, tipo: 'QR_CODE', resultado: avaliacao.liberado ? 'LIBERADO' : 'BLOQUEADO', motivo: avaliacao.motivo })
 
     if (avaliacao.liberado && catracaId) {
-      const catraca = await prisma.catraca.findFirst({ where: { id: catracaId, academiaId } })
-      if (catraca?.ipLocal && catraca.apiKey) {
-        await catracaService.liberarAcesso(catraca.ipLocal, catraca.apiKey, aluno.id)
-      }
+      await this.liberarCatraca(academiaId, catracaId, aluno.id)
     }
 
     return {
@@ -42,7 +41,72 @@ export class AcessoService {
     }
   }
 
-  private avaliarAcesso(aluno: any): { liberado: boolean; motivo: string | null } {
+  // ─── Acesso por Reconhecimento Facial ────────────────────────────────────────
+  async verificarFacial(academiaId: string, fotoBase64: string, catracaId?: string) {
+    // 1. Reconhecer o rosto
+    const reconhecimento = await facialService.reconhecer(fotoBase64)
+
+    if (!reconhecimento.encontrado || !reconhecimento.alunoId) {
+      await this.registrar({
+        academiaId,
+        alunoId: null,
+        catracaId,
+        tipo: 'BIOMETRIA',
+        resultado: 'BLOQUEADO',
+        motivo: reconhecimento.mensagem,
+      })
+      return { liberado: false, motivo: reconhecimento.mensagem, similaridade: reconhecimento.similaridade }
+    }
+
+    // 2. Buscar aluno e validar matrícula
+    const aluno = await prisma.aluno.findFirst({
+      where: { id: reconhecimento.alunoId, academiaId },
+      include: {
+        matriculas: {
+          where: { status: 'ATIVA' },
+          orderBy: { dataVencimento: 'desc' },
+          take: 1,
+          include: { plano: true },
+        },
+      },
+    })
+
+    if (!aluno) {
+      await this.registrar({ academiaId, alunoId: null, catracaId, tipo: 'BIOMETRIA', resultado: 'BLOQUEADO', motivo: 'Aluno não pertence a esta academia' })
+      return { liberado: false, motivo: 'Aluno não encontrado nesta academia' }
+    }
+
+    // 3. Avaliar status da matrícula
+    const avaliacao = this.avaliarAcesso(aluno)
+    await this.registrar({
+      academiaId,
+      alunoId: aluno.id,
+      catracaId,
+      tipo: 'BIOMETRIA',
+      resultado: avaliacao.liberado ? 'LIBERADO' : 'BLOQUEADO',
+      motivo: avaliacao.motivo,
+    })
+
+    // 4. Liberar catraca se autorizado
+    if (avaliacao.liberado && catracaId) {
+      await this.liberarCatraca(academiaId, catracaId, aluno.id)
+    }
+
+    return {
+      liberado: avaliacao.liberado,
+      motivo: avaliacao.motivo,
+      similaridade: reconhecimento.similaridade,
+      aluno: {
+        id: aluno.id,
+        nome: aluno.nome,
+        fotoUrl: aluno.fotoUrl,
+        plano: aluno.matriculas[0]?.plano?.nome,
+      },
+    }
+  }
+
+  // ─── Lógica de avaliação de acesso ──────────────────────────────────────────
+  avaliarAcesso(aluno: any): { liberado: boolean; motivo: string | null } {
     if (aluno.status === 'CANCELADO') return { liberado: false, motivo: 'Matrícula cancelada' }
     if (aluno.status === 'SUSPENSO') return { liberado: false, motivo: 'Aluno suspenso' }
 
@@ -58,6 +122,19 @@ export class AcessoService {
     return { liberado: true, motivo: null }
   }
 
+  // ─── Liberar catraca física ──────────────────────────────────────────────────
+  private async liberarCatraca(academiaId: string, catracaId: string, alunoId: string) {
+    try {
+      const catraca = await prisma.catraca.findFirst({ where: { id: catracaId, academiaId } })
+      if (catraca?.ip && catraca.apiKey) {
+        await catracaService.liberarAcesso(catraca.ip, catraca.apiKey, alunoId)
+      }
+    } catch (err) {
+      console.error('[AcessoService] Erro ao liberar catraca:', err)
+    }
+  }
+
+  // ─── Registrar log de acesso ─────────────────────────────────────────────────
   private async registrar(params: {
     academiaId: string; alunoId: string | null; catracaId?: string
     tipo: any; resultado: any; motivo?: string | null
@@ -79,8 +156,8 @@ export class AcessoService {
     const { page = 1, limit = 50, alunoId } = params
     return prisma.registroAcesso.findMany({
       where: { academiaId, ...(alunoId && { alunoId }) },
-      skip: (page - 1) * limit,
-      take: limit,
+      skip: (Number(page) - 1) * Number(limit),
+      take: Number(limit),
       orderBy: { criadoEm: 'desc' },
       include: { aluno: { select: { id: true, nome: true, fotoUrl: true } }, catraca: true },
     })
@@ -102,8 +179,8 @@ export class AcessoService {
 
   async sincronizarCatraca(academiaId: string, catracaId: string) {
     const catraca = await prisma.catraca.findFirst({ where: { id: catracaId, academiaId } })
-    if (!catraca?.ipLocal || !catraca.apiKey) {
-      throw new Error('Catraca sem IP ou API Key configurados')
+    if (!catraca?.ip || !catraca.apiKey) {
+      throw new Error('Catraca sem IP ou credencial configurados')
     }
 
     const alunos = await prisma.aluno.findMany({
@@ -111,6 +188,6 @@ export class AcessoService {
       select: { id: true, nome: true, qrCodeToken: true },
     })
 
-    return catracaService.sincronizarLista(catraca.ipLocal, catraca.apiKey, alunos)
+    return catracaService.sincronizarLista(catraca.ip, catraca.apiKey, alunos)
   }
 }
