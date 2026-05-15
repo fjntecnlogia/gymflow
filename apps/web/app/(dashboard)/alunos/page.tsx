@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/Button'
 import { AlunoModal } from '@/components/alunos/AlunoModal'
 import { MatricularModal } from '@/components/alunos/MatricularModal'
 import { CadastrarFaceModal } from '@/components/alunos/CadastrarFaceModal'
-import { Plus, Search, Users, Edit, UserCheck, Camera } from 'lucide-react'
+import { Plus, Search, Users, Edit, UserCheck, Camera, Eye } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import dayjs from 'dayjs'
 import 'dayjs/locale/pt-br'
@@ -19,6 +20,7 @@ const STATUS_TABS = [
 ]
 
 export default function AlunosPage() {
+  const router = useRouter()
   const [alunos, setAlunos] = useState<any[]>([])
   const [total, setTotal] = useState(0)
   const [busca, setBusca] = useState('')
@@ -167,8 +169,14 @@ export default function AlunosPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                          onClick={() => abrirEditar(a)}
+                          onClick={() => router.push(`/alunos/${a.id}`)}
                           className="flex items-center gap-1 text-xs text-cyan hover:text-cyan/80 transition-colors"
+                        >
+                          <Eye size={12} /> Ver Perfil
+                        </button>
+                        <button
+                          onClick={() => abrirEditar(a)}
+                          className="flex items-center gap-1 text-xs text-muted hover:text-white transition-colors"
                         >
                           <Edit size={12} /> Editar
                         </button>
