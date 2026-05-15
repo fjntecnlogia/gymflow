@@ -14,6 +14,7 @@ import { pagamentosRoutes } from './modules/pagamentos/pagamentos.routes'
 import { dashboardRoutes } from './modules/dashboard/dashboard.routes'
 import { adminRoutes } from './modules/admin/admin.routes'
 import { notificacoesRoutes } from './modules/notificacoes/notificacoes.routes'
+import { billingRoutes } from './modules/billing/billing.routes'
 import { startJobs } from './jobs'
 
 const app = Fastify({
@@ -64,6 +65,7 @@ async function bootstrap() {
   app.register(dashboardRoutes,    { prefix: '/dashboard' })
   app.register(adminRoutes,        { prefix: '/admin' })
   app.register(notificacoesRoutes, { prefix: '/notificacoes' })
+  app.register(billingRoutes,      { prefix: '/billing' })
 
   app.get('/health', async () => ({
     status: 'ok',

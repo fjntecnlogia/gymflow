@@ -1,7 +1,10 @@
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../../lib/prisma'
 import { criarUsuarioAuth } from '../../lib/supabase'
+import { criarCheckoutAssinatura } from '../../integrations/stripe'
 import { z } from 'zod'
+
+const WEB_URL = process.env.WEB_URL ?? 'https://web-gules-phi-97.vercel.app'
 
 const registroAcademiaSchema = z.object({
   academia: z.object({
@@ -16,6 +19,7 @@ const registroAcademiaSchema = z.object({
     senha: z.string().min(8),
     telefone: z.string().optional(),
   }),
+  plano: z.enum(['STARTER', 'PRO', 'ENTERPRISE']).default('STARTER'),
 })
 
 const registroAlunoSchema = z.object({
@@ -29,7 +33,7 @@ const registroAlunoSchema = z.object({
 export async function authRoutes(app: FastifyInstance) {
   // Registro de nova academia (onboarding SaaS)
   app.post('/registrar-academia', async (req, reply) => {
-    const { academia: acadDados, dono } = registroAcademiaSchema.parse(req.body)
+    const { academia: acadDados, dono, plano } = registroAcademiaSchema.parse(req.body)
 
     const slugExiste = await prisma.academia.findUnique({ where: { slug: acadDados.slug } })
     if (slugExiste) return reply.status(400).send({ error: 'Este slug já está em uso' })
@@ -39,6 +43,7 @@ export async function authRoutes(app: FastifyInstance) {
     const academia = await prisma.academia.create({
       data: {
         ...acadDados,
+        planoSaas: plano as any,
         trialExpiraEm: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
         usuarios: {
           create: {
@@ -53,10 +58,28 @@ export async function authRoutes(app: FastifyInstance) {
       include: { usuarios: { select: { id: true, nome: true, email: true, role: true } } },
     })
 
+    // Criar checkout Stripe para assinatura SaaS
+    let checkoutUrl: string | null = null
+    try {
+      const checkout = await criarCheckoutAssinatura({
+        academiaId: academia.id,
+        academiaEmail: academia.email,
+        academiaNome: academia.nome,
+        plano: plano as any,
+        successUrl: `${WEB_URL}/assinatura-sucesso`,
+        cancelUrl: `${WEB_URL}/planos-saas`,
+      })
+      checkoutUrl = checkout.url
+    } catch (err) {
+      console.error('Erro ao criar checkout Stripe:', err)
+      // Não bloqueia o cadastro — 14 dias trial sem cartão
+    }
+
     return reply.status(201).send({
-      message: 'Academia criada com sucesso! Verifique seu e-mail para confirmar a conta.',
+      message: 'Academia criada! Você tem 14 dias grátis. Adicione um cartão para continuar após o trial.',
       academiaId: academia.id,
       slug: academia.slug,
+      checkoutUrl,   // URL do Stripe Checkout (pode ser null se falhar)
     })
   })
 
