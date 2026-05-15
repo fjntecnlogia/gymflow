@@ -180,14 +180,16 @@ enum StatusMatricula {
 // ─── CATRACAS ──────────────────────────────────────────
 
 model Catraca {
-  id         String   @id @default(cuid())
-  academiaId String
-  nome       String
-  modelo     String?
-  ipLocal    String?
-  apiKey     String?
-  ativa      Boolean  @default(true)
-  criadoEm  DateTime @default(now())
+  id           String   @id @default(cuid())
+  academiaId   String
+  nome         String
+  modelo       String   @default("GENERICO")
+  ip           String
+  apiKey       String
+  ativa        Boolean  @default(true)
+  ultimoStatus String?
+  criadoEm    DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
 
   academia Academia         @relation(fields: [academiaId], references: [id], onDelete: Cascade)
   acessos  RegistroAcesso[]
@@ -223,6 +225,7 @@ enum TipoAcesso {
   BIOMETRIA
   RFID
   MANUAL
+  WEBHOOK
 }
 
 enum ResultadoAcesso {
