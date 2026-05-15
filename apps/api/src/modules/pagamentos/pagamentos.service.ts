@@ -6,7 +6,9 @@ const WEB_URL = process.env.WEB_URL ?? 'https://web-gules-phi-97.vercel.app'
 
 export class PagamentosService {
   async listar(academiaId: string, params: { status?: string; page?: number; limit?: number }) {
-    const { status, page = 1, limit = 20 } = params
+    const { status } = params
+    const page  = Number(params.page  ?? 1)
+    const limit = Number(params.limit ?? 20)
     return prisma.pagamento.findMany({
       where: { academiaId, ...(status && { status: status as any }) },
       skip: (page - 1) * limit,
