@@ -1,40 +1,57 @@
 import { FastifyInstance } from 'fastify'
 import { authMiddleware } from '../../middleware/auth.middleware'
 import { PagamentosService } from './pagamentos.service'
-import { PixService } from '../../integrations/pix'
+import { verificarWebhook } from '../../integrations/stripe'
 import { z } from 'zod'
 
 const service = new PagamentosService()
-const pixService = new PixService()
 
 const cobrarSchema = z.object({
-  alunoId: z.string(),
-  matriculaId: z.string().optional(),
-  valor: z.number().positive(),
-  descricao: z.string().default('Mensalidade GYMFLOW'),
+  alunoId:       z.string(),
+  matriculaId:   z.string().optional(),
+  valor:         z.number().positive(),
+  descricao:     z.string().default('Mensalidade GYMFLOW'),
   dataVencimento: z.string(),
 })
 
 export async function pagamentosRoutes(app: FastifyInstance) {
-  // Webhook PIX da Efí Bank (sem auth — validado por IP/token)
-  app.post('/webhook/pix', async (req, reply) => {
-    try {
-      const payload = req.body as any
-      const pagamentos = payload?.pix ?? []
+  // ─── Webhook Stripe (sem auth) ──────────────────────────────────────────────
+  app.post('/webhook/stripe', {
+    config: { rawBody: true },
+  }, async (req, reply) => {
+    const sig = req.headers['stripe-signature'] as string
 
-      for (const pix of pagamentos) {
-        if (pix.txid && pix.status === 'CONCLUIDA') {
-          await service.confirmarPagamentoPix(pix.txid)
+    try {
+      const event = verificarWebhook(
+        (req as any).rawBody ?? Buffer.from(JSON.stringify(req.body)),
+        sig,
+      )
+
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object as any
+        if (session.payment_status === 'paid') {
+          await service.confirmarPagamentoStripe(session.id)
         }
       }
 
-      return reply.status(200).send({ ok: true })
-    } catch (err) {
-      console.error('Webhook PIX erro:', err)
-      return reply.status(200).send({ ok: true }) // Sempre 200 para Efí não retentar
+      return reply.status(200).send({ received: true })
+    } catch (err: any) {
+      return reply.status(400).send({ error: `Webhook error: ${err.message}` })
     }
   })
 
+  // ─── Confirmar pagamento via sucesso (redirect) ─────────────────────────────
+  app.get('/confirmar/:sessionId', async (req, reply) => {
+    const { sessionId } = req.params as { sessionId: string }
+    try {
+      const pag = await service.confirmarPagamentoStripe(sessionId)
+      return { success: true, pagamento: pag }
+    } catch (err: any) {
+      return reply.status(400).send({ error: err.message })
+    }
+  })
+
+  // ─── Rotas protegidas ────────────────────────────────────────────────────────
   app.addHook('onRequest', authMiddleware)
 
   app.get('/', async (req) => {
@@ -44,7 +61,7 @@ export async function pagamentosRoutes(app: FastifyInstance) {
   app.post('/cobrar', async (req, reply) => {
     const academiaId = (req as any).academiaId
     const dados = cobrarSchema.parse(req.body)
-    const pagamento = await service.criarCobrancaPix(academiaId, {
+    const pagamento = await service.criarCobrancaStripe(academiaId, {
       ...dados,
       dataVencimento: new Date(dados.dataVencimento),
     })
@@ -53,21 +70,5 @@ export async function pagamentosRoutes(app: FastifyInstance) {
 
   app.get('/resumo', async (req) => {
     return service.resumoFinanceiro((req as any).academiaId)
-  })
-
-  // Configurar webhook PIX (chamar uma vez no setup)
-  app.post('/configurar-webhook', async (req, reply) => {
-    const { webhookUrl } = req.body as { webhookUrl: string }
-    const result = await pixService.configurarWebhook(
-      process.env.PIX_CHAVE!,
-      webhookUrl,
-    )
-    return result
-  })
-
-  // Consultar status de cobrança específica
-  app.get('/consultar/:txid', async (req) => {
-    const { txid } = req.params as { txid: string }
-    return pixService.consultarCobranca(txid)
   })
 }
