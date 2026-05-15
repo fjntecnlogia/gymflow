@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, QrCode, Phone, Mail, User, Calendar, CreditCard,
   ShieldCheck, ShieldX, Clock, Printer, Camera, CheckCircle2,
-  XCircle, AlertCircle, UserCheck, MoreVertical
+  XCircle, AlertCircle, UserCheck, TrendingUp, BarChart2, Flame
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { mascaraTelefone, mascaraCPF } from '@/lib/masks'
@@ -47,7 +47,7 @@ export default function PerfilAlunoPage() {
   const [qrCode, setQrCode] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [faceModal, setFaceModal] = useState(false)
-  const [abaTela, setAbaTela] = useState<'visao-geral' | 'acessos' | 'pagamentos'>('visao-geral')
+  const [abaTela, setAbaTela] = useState<'visao-geral' | 'frequencia' | 'acessos' | 'pagamentos'>('visao-geral')
 
   async function carregar() {
     try {
@@ -270,9 +270,10 @@ export default function PerfilAlunoPage() {
       </div>
 
       {/* ── Abas ──────────────────────────────────────────────── */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         {[
           { key: 'visao-geral', label: 'Visão Geral' },
+          { key: 'frequencia', label: '📅 Frequência' },
           { key: 'acessos', label: `Acessos (${aluno.acessos?.length ?? 0})` },
           { key: 'pagamentos', label: `Pagamentos (${aluno.pagamentos?.length ?? 0})` },
         ].map(aba => (
@@ -285,6 +286,212 @@ export default function PerfilAlunoPage() {
           </button>
         ))}
       </div>
+
+      {/* ── Aba: Frequência ─────────────────────────────────── */}
+      {abaTela === 'frequencia' && (() => {
+        const acessosLiberados = aluno.acessos?.filter((a: any) => a.resultado === 'LIBERADO') ?? []
+
+        // Mapa dia → lista de horários
+        const porDia: Record<string, string[]> = {}
+        acessosLiberados.forEach((a: any) => {
+          const dia = dayjs(a.criadoEm).format('YYYY-MM-DD')
+          if (!porDia[dia]) porDia[dia] = []
+          porDia[dia].push(dayjs(a.criadoEm).format('HH:mm'))
+        })
+
+        // Heatmap: últimos 84 dias (12 semanas)
+        const hoje = dayjs()
+        const diasHeatmap = Array.from({ length: 84 }, (_, i) =>
+          hoje.subtract(83 - i, 'day').format('YYYY-MM-DD')
+        )
+
+        // Frequência por dia da semana
+        const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+        const porDiaSemana = Array(7).fill(0)
+        acessosLiberados.forEach((a: any) => { porDiaSemana[dayjs(a.criadoEm).day()]++ })
+        const maxDiaSemana = Math.max(...porDiaSemana, 1)
+
+        // Frequência por hora
+        const porHora = Array(24).fill(0)
+        acessosLiberados.forEach((a: any) => { porHora[dayjs(a.criadoEm).hour()]++ })
+        const maxHora = Math.max(...porHora, 1)
+        const horaFavorita = porHora.indexOf(Math.max(...porHora))
+
+        // Sequência atual (streak)
+        let streak = 0
+        let d = hoje
+        while (porDia[d.format('YYYY-MM-DD')]) {
+          streak++
+          d = d.subtract(1, 'day')
+        }
+
+        // Média de visitas por semana
+        const semanas = Math.max(Math.ceil(acessosLiberados.length > 0
+          ? hoje.diff(dayjs(acessosLiberados[acessosLiberados.length - 1]?.criadoEm), 'week') + 1
+          : 1, 1), 1)
+        const mediaVisitas = (acessosLiberados.length / semanas).toFixed(1)
+
+        return (
+          <div className="space-y-6">
+            {/* Stats de frequência */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: 'Total de visitas', value: acessosLiberados.length, icon: ShieldCheck, color: 'text-cyan' },
+                { label: 'Visitas por semana', value: mediaVisitas, icon: TrendingUp, color: 'text-green' },
+                { label: 'Sequência atual', value: `${streak} dia${streak !== 1 ? 's' : ''}`, icon: Flame, color: streak > 3 ? 'text-orange' : 'text-muted' },
+                { label: 'Horário favorito', value: acessosLiberados.length > 0 ? `${String(horaFavorita).padStart(2,'0')}h` : '—', icon: Clock, color: 'text-cyan' },
+              ].map(s => (
+                <div key={s.label} className="card p-4">
+                  <s.icon size={16} className={s.color + ' mb-2'} />
+                  <div className={`text-xl font-bold font-display ${s.color}`}>{s.value}</div>
+                  <div className="text-xs text-muted">{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Heatmap de visitas — 12 semanas */}
+            <div className="card p-5">
+              <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
+                <Calendar size={14} className="text-cyan" /> Calendário de Visitas (últimas 12 semanas)
+              </h3>
+              <div className="flex gap-1 flex-wrap">
+                {diasHeatmap.map(dia => {
+                  const visitas = porDia[dia]?.length ?? 0
+                  const isHoje = dia === hoje.format('YYYY-MM-DD')
+                  return (
+                    <div
+                      key={dia}
+                      title={`${dayjs(dia).format('DD/MM/YYYY')}${visitas > 0 ? ` · ${visitas} visita${visitas > 1 ? 's' : ''} · ${porDia[dia].join(', ')}` : ' · sem visita'}`}
+                      className={`w-3.5 h-3.5 rounded-sm cursor-default transition-transform hover:scale-125 ${
+                        isHoje ? 'ring-1 ring-cyan' :
+                        visitas === 0 ? 'bg-dark-border' :
+                        visitas === 1 ? 'bg-cyan/30' :
+                        visitas === 2 ? 'bg-cyan/60' :
+                        'bg-cyan'
+                      }`}
+                    />
+                  )
+                })}
+              </div>
+              <div className="flex items-center gap-2 mt-3 text-xs text-muted">
+                <span>Menos</span>
+                {['bg-dark-border', 'bg-cyan/30', 'bg-cyan/60', 'bg-cyan'].map(c => (
+                  <div key={c} className={`w-3.5 h-3.5 rounded-sm ${c}`} />
+                ))}
+                <span>Mais</span>
+              </div>
+            </div>
+
+            {/* Gráfico por dia da semana */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="card p-5">
+                <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
+                  <BarChart2 size={14} className="text-cyan" /> Visitas por Dia da Semana
+                </h3>
+                <div className="flex items-end gap-2 h-24">
+                  {DIAS.map((dia, i) => {
+                    const pct = (porDiaSemana[i] / maxDiaSemana) * 100
+                    const isMax = porDiaSemana[i] === Math.max(...porDiaSemana)
+                    return (
+                      <div key={dia} className="flex-1 flex flex-col items-center gap-1">
+                        <div
+                          className={`w-full rounded-t-sm ${isMax ? 'bg-cyan' : 'bg-cyan/30'}`}
+                          style={{ height: `${Math.max(pct, 5)}%` }}
+                        />
+                        <span className="text-xs text-muted">{dia}</span>
+                        <span className="text-xs font-bold">{porDiaSemana[i]}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Gráfico por hora do dia */}
+              <div className="card p-5">
+                <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
+                  <Clock size={14} className="text-cyan" /> Horários de Entrada
+                </h3>
+                <div className="flex items-end gap-0.5 h-24">
+                  {porHora.map((qtd, hora) => {
+                    const pct = (qtd / maxHora) * 100
+                    const isMax = qtd === Math.max(...porHora) && qtd > 0
+                    return (
+                      <div
+                        key={hora}
+                        className="flex-1 flex flex-col items-center group relative"
+                        title={`${String(hora).padStart(2,'0')}h: ${qtd} visita${qtd !== 1 ? 's' : ''}`}
+                      >
+                        <div
+                          className={`w-full rounded-t-sm transition-colors ${isMax ? 'bg-cyan' : qtd > 0 ? 'bg-cyan/40 group-hover:bg-cyan/70' : 'bg-dark-border'}`}
+                          style={{ height: `${Math.max(pct, 3)}%` }}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+                <div className="flex justify-between text-xs text-muted mt-1">
+                  <span>00h</span><span>06h</span><span>12h</span><span>18h</span><span>23h</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Lista de visitas recentes com horário */}
+            <div className="card overflow-hidden">
+              <div className="px-5 py-4 border-b border-dark-border flex items-center justify-between">
+                <h3 className="font-semibold text-sm flex items-center gap-2">
+                  <Clock size={14} className="text-cyan" /> Registro de Visitas com Horário
+                </h3>
+                <span className="text-xs text-muted">{acessosLiberados.length} visitas registradas</span>
+              </div>
+              {acessosLiberados.length === 0 ? (
+                <div className="text-center py-10 text-muted text-sm">
+                  <ShieldCheck size={32} className="mx-auto mb-3 opacity-20" />
+                  Nenhuma visita registrada ainda
+                </div>
+              ) : (
+                <div className="divide-y divide-dark-border/50 max-h-[400px] overflow-auto">
+                  {/* Agrupar por data */}
+                  {Object.entries(
+                    acessosLiberados.reduce((acc: Record<string, any[]>, a: any) => {
+                      const d = dayjs(a.criadoEm).format('YYYY-MM-DD')
+                      if (!acc[d]) acc[d] = []
+                      acc[d].push(a)
+                      return acc
+                    }, {})
+                  ).sort(([a], [b]) => b.localeCompare(a)).map(([dia, visitas]) => (
+                    <div key={dia}>
+                      <div className="px-5 py-2 bg-dark-card/60 flex items-center justify-between">
+                        <span className="text-xs font-bold text-muted uppercase tracking-wider">
+                          {dayjs(dia).format('dddd, DD [de] MMMM')}
+                        </span>
+                        <span className="text-xs text-cyan font-semibold">
+                          {(visitas as any[]).length} visita{(visitas as any[]).length > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      {(visitas as any[]).map((a: any) => (
+                        <div key={a.id} className="flex items-center gap-3 px-5 py-2.5">
+                          <div className="w-10 h-10 rounded-xl bg-cyan/10 flex flex-col items-center justify-center flex-shrink-0">
+                            <span className="text-cyan text-xs font-bold leading-none">{dayjs(a.criadoEm).format('HH')}</span>
+                            <span className="text-cyan/60 text-xs leading-none">{dayjs(a.criadoEm).format('mm')}</span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium">{dayjs(a.criadoEm).format('HH:mm:ss')}</div>
+                            <div className="text-xs text-muted">
+                              {a.tipo === 'QR_CODE' ? '📱 QR Code' : a.tipo === 'BIOMETRIA' ? '👤 Facial' : a.tipo === 'MANUAL' ? '🔓 Manual' : a.tipo}
+                              {a.catraca?.nome ? ` · ${a.catraca.nome}` : ''}
+                            </div>
+                          </div>
+                          <span className="text-xs text-muted">{dayjs(a.criadoEm).fromNow()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* ── Aba: Visão Geral ─────────────────────────────────── */}
       {abaTela === 'visao-geral' && (
