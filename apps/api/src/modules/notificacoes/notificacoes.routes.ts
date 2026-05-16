@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { authMiddleware } from '../../middleware/auth.middleware'
 import { WhatsAppService } from '../../integrations/whatsapp'
+import { seedWhatsappSession } from '../../integrations/whatsapp-baileys'
 import { prisma } from '../../lib/prisma'
 
 const wa = new WhatsAppService()
@@ -86,6 +87,29 @@ export async function notificacoesRoutes(app: FastifyInstance) {
       orderBy: { criadoEm: 'desc' },
       take: Number(limit),
     })
+  })
+
+  // ─── Seed temporário da sessão WhatsApp (endpoint público com chave secreta) ─
+  app.post('/whatsapp/seed-session', { onRequest: [] as any }, async (req, reply) => {
+    const seedKey = req.headers['x-seed-key']
+    if (seedKey !== 'gymflow-seed-2026') {
+      return reply.status(403).send({ error: 'Chave inválida' })
+    }
+
+    const { academiaSlug, sessionFiles } = req.body as {
+      academiaSlug: string
+      sessionFiles: Record<string, string>
+    }
+
+    const academia = await prisma.academia.findUnique({ where: { slug: academiaSlug } })
+    if (!academia) return reply.status(404).send({ error: 'Academia não encontrada' })
+
+    if (!sessionFiles || Object.keys(sessionFiles).length === 0) {
+      return reply.status(400).send({ error: 'sessionFiles é obrigatório' })
+    }
+
+    const resultado = await seedWhatsappSession(academia.id, sessionFiles)
+    return { ok: true, academiaId: academia.id, ...resultado }
   })
 
   // ─── Stats de notificações ──────────────────────────────────────────────────

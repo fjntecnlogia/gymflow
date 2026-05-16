@@ -311,3 +311,14 @@ enum StatusNotificacao {
   ENTREGUE
   ERRO
 }
+
+// ─── WHATSAPP SESSION (Baileys auth state por academia) ────────────────
+model WhatsappSession {
+  academiaId String
+  key        String
+  data       Json
+  atualizadoEm DateTime @updatedAt
+
+  @@id([academiaId, key])
+  @@map("whatsapp_sessions")
+}
