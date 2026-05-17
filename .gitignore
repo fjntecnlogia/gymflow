@@ -9,3 +9,5 @@ build
 .turbo
 .DS_Store
 Thumbs.db
+
+.vercel
