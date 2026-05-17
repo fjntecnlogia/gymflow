@@ -192,6 +192,30 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
     }
   })
 
+  // ── Testar conectividade interna ao CompreFace Core e API ────────────────
+  app.get('/compreface-setup/ping-services', async (req, reply) => {
+    const key = req.headers['x-setup-key']
+    if (key !== 'cf-setup-2026') return reply.status(403).send({ error: 'Forbidden' })
+
+    const { default: axios } = await import('axios')
+    const results: Record<string, any> = {}
+    const services = [
+      { name: 'compreface-core-3000', url: 'http://compreface-core.railway.internal:3000' },
+      { name: 'compreface-core-5000', url: 'http://compreface-core.railway.internal:5000' },
+      { name: 'compreface-api-8080', url: 'http://compreface-api.railway.internal:8080/actuator/health' },
+      { name: 'compreface-admin-8080', url: 'http://compreface-admin.railway.internal:8080/actuator/health' },
+    ]
+    for (const svc of services) {
+      try {
+        const r = await axios.get(svc.url, { timeout: 5000 })
+        results[svc.name] = { status: r.status, data: JSON.stringify(r.data).slice(0, 100) }
+      } catch (e: any) {
+        results[svc.name] = { error: e.message?.slice(0, 80) ?? 'timeout' }
+      }
+    }
+    return results
+  })
+
   // ── Listar TODAS as tabelas do schema CompreFace ──────────────────────────
   app.get('/compreface-setup/schema', async (req, reply) => {
     const key = req.headers['x-setup-key']
