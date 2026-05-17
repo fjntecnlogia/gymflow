@@ -26,8 +26,9 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
     const pool = makePool()
     try {
       const client = await pool.connect()
+      // Ativar sem coluna name (não existe no schema CompreFace)
       const activateResult = await client.query(
-        `UPDATE "user" SET enabled = true, name = COALESCE(name, email) WHERE enabled = false RETURNING email, enabled`
+        `UPDATE "user" SET enabled = true WHERE enabled = false RETURNING email, enabled`
       )
       const usersResult = await client.query(
         `SELECT email, enabled, global_role FROM "user" LIMIT 10`
@@ -59,7 +60,6 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
   })
 
   // ── Reset de senha via hash bcrypt pré-computado ─────────────────────────
-  // Enviar newPasswordHash (bcrypt $2b$10$...) gerado externamente.
   // Senha padrão "Admin@2026!" → hash: $2b$10$xS4u7dAh859uPIrWd4dMF.L1TOHuOfrQ1aYbZG3G9//bJeoKImNQC
   app.post('/compreface-setup/reset-password', async (req, reply) => {
     const key = req.headers['x-setup-key']
@@ -67,7 +67,6 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
 
     const body = req.body as any
     const email = body?.email ?? 'admin@gymflow.com'
-    // Usa hash fornecido ou o default para Admin@2026!
     const passwordHash = body?.newPasswordHash ??
       '$2b$10$xS4u7dAh859uPIrWd4dMF.L1TOHuOfrQ1aYbZG3G9//bJeoKImNQC'
 
@@ -75,9 +74,10 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
     try {
       const client = await pool.connect()
 
+      // Só atualiza password e enabled (sem coluna name)
       const result = await client.query(
         `UPDATE "user"
-         SET password = $2, enabled = true, name = COALESCE(name, email)
+         SET password = $2, enabled = true
          WHERE email = $1
          RETURNING id, email, enabled, global_role`,
         [email, passwordHash]
@@ -94,53 +94,48 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
         ok: true,
         user: result.rows[0],
         senhaDefinida: 'Admin@2026!',
-        hint: 'Use esta senha para login no CompreFace e OAuth',
+        hint: 'Use esta senha no OAuth: grant_type=password&username=admin@gymflow.com&password=Admin@2026!',
       }
     } catch (err: any) {
       return reply.status(500).send({ error: err.message })
     }
   })
 
-  // ── Gerar API Key diretamente no CompreFace DB ────────────────────────────
-  // Cria uma API Key para o subject RECOGNITION no banco interno
-  app.post('/compreface-setup/create-api-key', async (req, reply) => {
+  // ── Inspecionar colunas + dados de tabelas ────────────────────────────────
+  app.get('/compreface-setup/inspect', async (req, reply) => {
     const key = req.headers['x-setup-key']
     if (key !== 'cf-setup-2026') return reply.status(403).send({ error: 'Forbidden' })
-
-    const { applicationName } = req.body as any || {}
-    const appName = applicationName ?? 'GYMFLOW'
-
     const pool = makePool()
     try {
       const client = await pool.connect()
 
-      // Verificar se já existe uma aplicação com esse nome
-      const existingApp = await client.query(
-        `SELECT a.id, a.name, ak.api_key, ak.role_type
-         FROM app a
-         LEFT JOIN app_api_key ak ON ak.app_id = a.id
-         WHERE a.name = $1
-         LIMIT 5`,
-        [appName]
+      // Colunas de user e app
+      const userCols = await client.query(
+        `SELECT column_name, data_type FROM information_schema.columns
+         WHERE table_name = 'user' ORDER BY ordinal_position`
       )
-
-      if (existingApp.rows.length > 0) {
-        client.release()
-        await pool.end()
-        return { ok: true, existing: true, keys: existingApp.rows }
-      }
-
-      // Listar todas as aplicações existentes
-      const allApps = await client.query(
-        `SELECT a.id, a.name, ak.api_key, ak.role_type
-         FROM app a
-         LEFT JOIN app_api_key ak ON ak.app_id = a.id
-         LIMIT 20`
+      const appCols = await client.query(
+        `SELECT column_name, data_type FROM information_schema.columns
+         WHERE table_name = 'app' ORDER BY ordinal_position`
       )
+      // Apps existentes com todos os campos
+      const apps = await client.query(`SELECT * FROM "app" LIMIT 10`)
+
+      // Tentar listar API keys (pode estar em model ou outro lugar)
+      let models: any[] = []
+      try {
+        const m = await client.query(`SELECT * FROM "model" LIMIT 10`)
+        models = m.rows
+      } catch {}
 
       client.release()
       await pool.end()
-      return { ok: true, existing: false, allApps: allApps.rows }
+      return {
+        userColumns: userCols.rows,
+        appColumns: appCols.rows,
+        apps: apps.rows,
+        models,
+      }
     } catch (err: any) {
       return reply.status(500).send({ error: err.message })
     }
@@ -156,7 +151,6 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
       const tables = await client.query(
         `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name`
       )
-      // Contar registros em cada tabela relevante
       const counts: Record<string, number> = {}
       for (const t of tables.rows.map((r: any) => r.table_name)) {
         try {
