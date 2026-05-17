@@ -141,6 +141,34 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
     }
   })
 
+  // ── Full user + account activation ───────────────────────────────────────
+  app.post('/compreface-setup/full-activate', async (req, reply) => {
+    const key = req.headers['x-setup-key']
+    if (key !== 'cf-setup-2026') return reply.status(403).send({ error: 'Forbidden' })
+    const pool = makePool()
+    try {
+      const client = await pool.connect()
+      // Ativar conta completamente (todos os flags de segurança)
+      const result = await client.query(
+        `UPDATE "user"
+         SET enabled = true,
+             account_non_expired = true,
+             account_non_locked = true,
+             credentials_non_expired = true,
+             registration_token = null
+         WHERE email = 'admin@gymflow.com'
+         RETURNING id, email, enabled, account_non_expired, account_non_locked, credentials_non_expired, global_role`
+      )
+      // Verificar oauth_client_details
+      const oauth = await client.query(`SELECT client_id, client_secret, authorized_grant_types FROM oauth_client_details LIMIT 5`)
+      client.release()
+      await pool.end()
+      return { ok: true, user: result.rows[0], oauthClients: oauth.rows }
+    } catch (err: any) {
+      return reply.status(500).send({ error: err.message })
+    }
+  })
+
   // ── Listar TODAS as tabelas do schema CompreFace ──────────────────────────
   app.get('/compreface-setup/schema', async (req, reply) => {
     const key = req.headers['x-setup-key']
