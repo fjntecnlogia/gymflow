@@ -141,6 +141,29 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
     }
   })
 
+  // ── Corrigir oauth_client_details (Spring Security 5 exige prefixo {noop}) ──
+  app.post('/compreface-setup/fix-oauth', async (req, reply) => {
+    const key = req.headers['x-setup-key']
+    if (key !== 'cf-setup-2026') return reply.status(403).send({ error: 'Forbidden' })
+    const pool = makePool()
+    try {
+      const client = await pool.connect()
+      // Atualizar client_secret para plaintext com prefixo {noop}
+      const r1 = await client.query(
+        `UPDATE oauth_client_details SET client_secret = '{noop}password' RETURNING client_id, client_secret`
+      )
+      // Verificar estado atual
+      const r2 = await client.query(
+        `SELECT client_id, client_secret, authorized_grant_types FROM oauth_client_details LIMIT 5`
+      )
+      client.release()
+      await pool.end()
+      return { ok: true, updated: r1.rows, current: r2.rows }
+    } catch (err: any) {
+      return reply.status(500).send({ error: err.message })
+    }
+  })
+
   // ── Full user + account activation ───────────────────────────────────────
   app.post('/compreface-setup/full-activate', async (req, reply) => {
     const key = req.headers['x-setup-key']
