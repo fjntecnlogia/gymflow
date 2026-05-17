@@ -29,6 +29,7 @@
     "stripe": "^16.2.0",
     "ws": "^8.18.0",
     "axios": "^1.7.2",
+    "pg": "^8.12.0",
     "@whiskeysockets/baileys": "^6.7.9",
     "qrcode": "^1.5.3",
     "uuid": "^10.0.0"
@@ -37,6 +38,7 @@
     "@types/node": "^20.14.2",
     "@types/qrcode": "^1.5.5",
     "@types/uuid": "^10.0.0",
+    "@types/pg": "^8.11.6",
     "prisma": "^5.14.0",
     "tsx": "^4.15.1",
     "typescript": "^5.4.5"
