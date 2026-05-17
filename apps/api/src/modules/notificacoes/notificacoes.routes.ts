@@ -1,10 +1,8 @@
 import { FastifyInstance } from 'fastify'
 import { authMiddleware } from '../../middleware/auth.middleware'
-import { WhatsAppService } from '../../integrations/whatsapp'
 import { seedWhatsappSession } from '../../integrations/whatsapp-baileys'
+import { getWhatsAppService } from '../../integrations/whatsapp-direct'
 import { prisma } from '../../lib/prisma'
-
-const wa = new WhatsAppService()
 
 export async function notificacoesRoutes(app: FastifyInstance) {
   // ─── Seed temporário (PÚBLICO — chave secreta, antes do authMiddleware) ──────
@@ -30,48 +28,86 @@ export async function notificacoesRoutes(app: FastifyInstance) {
 
   // ─── Status da conexão WhatsApp ─────────────────────────────────────────────
   app.get('/whatsapp/status', async (req) => {
-    const conectado = await wa.verificarConexao()
-    return { conectado }
+    const academiaId = (req as any).academiaId
+    // Verificar se tem sessão no banco
+    const temSessao = await prisma.whatsappSession.count({
+      where: { academiaId, key: 'creds' },
+    })
+    if (!temSessao) return { conectado: false }
+
+    try {
+      const svc = await getWhatsAppService(academiaId)
+      return { conectado: svc.isConectado() }
+    } catch {
+      return { conectado: false }
+    }
   })
 
-  // ─── Conectar WhatsApp (gera QR Code) ───────────────────────────────────────
+  // ─── Conectar WhatsApp via sessão PostgreSQL ─────────────────────────────────
   app.post('/whatsapp/conectar', async (req, reply) => {
-    try {
-      // Primeiro tenta criar a instância
-      await wa.criarInstancia()
-    } catch {
-      // Instância pode já existir — tudo bem
+    const academiaId = (req as any).academiaId
+
+    // Verificar se tem sessão salva
+    const temSessao = await prisma.whatsappSession.count({
+      where: { academiaId, key: 'creds' },
+    })
+
+    if (!temSessao) {
+      return {
+        conectado: false,
+        qrCode: null,
+        message: 'Nenhuma sessão encontrada. Use o app local para conectar e sincronizar a sessão.',
+      }
     }
 
     try {
-      const qrData = await wa.obterQrCode()
-      const conectado = await wa.verificarConexao()
+      const svc = await getWhatsAppService(academiaId)
+      const conectado = svc.isConectado()
       return {
         conectado,
-        qrCode: qrData?.qrcode?.base64 ?? qrData?.base64 ?? null,
-        message: conectado ? 'WhatsApp já conectado!' : 'Escaneie o QR Code com o WhatsApp',
+        qrCode: null,
+        message: conectado
+          ? '✅ WhatsApp conectado via sessão salva!'
+          : '⏳ Conectando... aguarde alguns segundos e verifique novamente.',
       }
     } catch (err: any) {
-      return reply.status(400).send({ error: `Erro ao conectar: ${err.message}` })
+      return reply.status(500).send({ error: `Erro ao iniciar serviço: ${err.message}` })
     }
   })
 
   // ─── Desconectar WhatsApp ───────────────────────────────────────────────────
-  app.post('/whatsapp/desconectar', async () => {
-    try {
-      const wa2 = new WhatsAppService()
-      await wa2.api.delete(`/instance/logout/${process.env.EVOLUTION_INSTANCE}`)
-      return { ok: true }
-    } catch { return { ok: false } }
+  app.post('/whatsapp/desconectar', async (req) => {
+    const academiaId = (req as any).academiaId
+    await prisma.whatsappSession.deleteMany({ where: { academiaId } })
+    return { ok: true, message: 'Sessão removida do banco. Reconecte via app local.' }
   })
 
   // ─── Enviar mensagem de teste ───────────────────────────────────────────────
   app.post('/whatsapp/teste', async (req, reply) => {
+    const academiaId = (req as any).academiaId
     const { telefone, mensagem } = req.body as { telefone: string; mensagem: string }
     if (!telefone || !mensagem) return reply.status(400).send({ error: 'telefone e mensagem obrigatórios' })
 
-    const ok = await wa.enviarMensagem({ telefone, mensagem })
-    return { ok, message: ok ? 'Mensagem enviada!' : 'Falha ao enviar' }
+    try {
+      const svc = await getWhatsAppService(academiaId)
+      const ok = await svc.enviarMensagem(telefone, mensagem)
+
+      // Log
+      await prisma.notificacaoLog.create({
+        data: {
+          academiaId,
+          canal: 'WHATSAPP',
+          tipo: 'teste',
+          destinatario: telefone,
+          mensagem,
+          status: ok ? 'ENVIADO' : 'ERRO',
+        },
+      }).catch(() => {})
+
+      return { ok, message: ok ? 'Mensagem enviada!' : 'Falha ao enviar — WhatsApp desconectado?' }
+    } catch (err: any) {
+      return reply.status(500).send({ error: err.message })
+    }
   })
 
   // ─── Enviar cobrança manual ─────────────────────────────────────────────────
@@ -87,14 +123,28 @@ export async function notificacoesRoutes(app: FastifyInstance) {
     if (!aluno.telefone) return reply.status(400).send({ error: 'Aluno sem telefone cadastrado' })
 
     const mat = aluno.matriculas[0]
-    await wa.enviarMensagem({
-      telefone: aluno.telefone,
-      mensagem: `Olá, *${aluno.nome}*! 👋\n\nLembrando que ${mat ? `seu plano *${mat.plano.nome}* vence em breve` : 'sua mensalidade está pendente'}.\n\nQualquer dúvida, fale conosco! 💪\n\n_GYMFLOW_`,
-      academiaId,
-      alunoId,
-      tipo: 'cobranca_manual',
-    })
-    return { ok: true }
+    const msgText = `Olá, *${aluno.nome}*! 👋\n\nLembrando que ${mat ? `seu plano *${mat.plano.nome}* vence em breve` : 'sua mensalidade está pendente'}.\n\nQualquer dúvida, fale conosco! 💪\n\n_GYMFLOW_`
+
+    try {
+      const svc = await getWhatsAppService(academiaId)
+      const ok = await svc.enviarMensagem(aluno.telefone, msgText)
+
+      await prisma.notificacaoLog.create({
+        data: {
+          academiaId,
+          alunoId,
+          canal: 'WHATSAPP',
+          tipo: 'cobranca_manual',
+          destinatario: aluno.telefone,
+          mensagem: msgText,
+          status: ok ? 'ENVIADO' : 'ERRO',
+        },
+      }).catch(() => {})
+
+      return { ok }
+    } catch (err: any) {
+      return reply.status(500).send({ error: err.message })
+    }
   })
 
   // ─── Log de notificações ────────────────────────────────────────────────────
@@ -107,7 +157,6 @@ export async function notificacoesRoutes(app: FastifyInstance) {
       take: Number(limit),
     })
   })
-
 
   // ─── Stats de notificações ──────────────────────────────────────────────────
   app.get('/stats', async (req) => {
