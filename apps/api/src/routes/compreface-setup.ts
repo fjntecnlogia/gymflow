@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { Pool } from 'pg'
-import { createHash } from 'crypto'
+import bcrypt from 'bcryptjs'
 
 /**
  * Rota temporária para ativar usuário no CompreFace via banco interno Railway
@@ -59,18 +59,19 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
     }
   })
 
-  // ── Reset de senha via bcrypt pré-computado ───────────────────────────────
-  // A senha padrão do CompreFace no primeiro boot é "password" (hash fixo da imagem)
-  // Usamos o hash bcrypt gerado pelo próprio Spring ao inicializar
+  // ── Reset de senha (aceita texto plano, gera hash bcrypt 10) ─────────────
   app.post('/compreface-setup/reset-password', async (req, reply) => {
     const key = req.headers['x-setup-key']
     if (key !== 'cf-setup-2026') return reply.status(403).send({ error: 'Forbidden' })
 
-    const { email, newPasswordHash } = req.body as any
+    const { email, newPassword } = req.body as any
 
-    if (!email || !newPasswordHash) {
-      return reply.status(400).send({ error: 'email e newPasswordHash são obrigatórios' })
+    if (!email || !newPassword) {
+      return reply.status(400).send({ error: 'email e newPassword são obrigatórios' })
     }
+
+    // Gerar hash bcrypt com cost 10 (mesmo padrão do Spring Security BCryptPasswordEncoder)
+    const passwordHash = await bcrypt.hash(newPassword, 10)
 
     const pool = makePool()
     try {
@@ -82,7 +83,7 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
          SET password = $2, enabled = true, name = COALESCE(name, email)
          WHERE email = $1
          RETURNING id, email, enabled, global_role`,
-        [email, newPasswordHash]
+        [email, passwordHash]
       )
 
       client.release()
@@ -92,7 +93,7 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
         return reply.status(404).send({ error: `Usuário ${email} não encontrado` })
       }
 
-      return { ok: true, user: result.rows[0] }
+      return { ok: true, user: result.rows[0], hashUsed: passwordHash }
     } catch (err: any) {
       return reply.status(500).send({ error: err.message })
     }
