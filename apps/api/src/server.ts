@@ -16,6 +16,7 @@ import { adminRoutes } from './modules/admin/admin.routes'
 import { notificacoesRoutes } from './modules/notificacoes/notificacoes.routes'
 import { billingRoutes } from './modules/billing/billing.routes'
 import { catracasRoutes } from './modules/catracas/catracas.routes'
+import { biometriaRoutes } from './modules/biometria/biometria.routes'
 import { seedWhatsappSession } from './integrations/whatsapp-baileys'
 import { prisma } from './lib/prisma'
 import { startJobs } from './jobs'
@@ -81,6 +82,7 @@ async function bootstrap() {
   app.register(notificacoesRoutes, { prefix: '/notificacoes' })
   app.register(billingRoutes,      { prefix: '/billing' })
   app.register(catracasRoutes,     { prefix: '/catracas' })
+  app.register(biometriaRoutes,   { prefix: '/biometria' })
 
   // ─── Seed temporário WhatsApp (público, chave secreta) ─────────────────────
   app.post('/seed-whatsapp', async (req, reply) => {

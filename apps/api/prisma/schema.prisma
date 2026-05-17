@@ -32,7 +32,8 @@ model Academia {
   acessos    RegistroAcesso[]
   pagamentos Pagamento[]
   catracas   Catraca[]
-  notificacoes NotificacaoLog[]
+  notificacoes   NotificacaoLog[]
+  faceEmbeddings FaceEmbedding[]
 
   @@map("academias")
 }
@@ -96,10 +97,13 @@ model Aluno {
   criadoEm      DateTime    @default(now())
   atualizadoEm  DateTime    @updatedAt
 
-  academia   Academia         @relation(fields: [academiaId], references: [id], onDelete: Cascade)
-  matriculas Matricula[]
-  acessos    RegistroAcesso[]
-  pagamentos Pagamento[]
+  faceRegistrada Boolean  @default(false)
+
+  academia       Academia         @relation(fields: [academiaId], references: [id], onDelete: Cascade)
+  matriculas     Matricula[]
+  acessos        RegistroAcesso[]
+  pagamentos     Pagamento[]
+  faceEmbedding  FaceEmbedding?
 
   @@unique([academiaId, email])
   @@index([academiaId, status])
@@ -313,6 +317,23 @@ enum StatusNotificacao {
 }
 
 // ─── WHATSAPP SESSION (Baileys auth state por academia) ────────────────
+// ─── BIOMETRIA FACIAL ─────────────────────────────────
+
+model FaceEmbedding {
+  id           String   @id @default(cuid())
+  alunoId      String   @unique
+  academiaId   String
+  embedding    String   // JSON array de floats (vetor 512d)
+  criadoEm    DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  aluno    Aluno    @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  academia Academia @relation(fields: [academiaId], references: [id], onDelete: Cascade)
+
+  @@index([academiaId])
+  @@map("face_embeddings")
+}
+
 model WhatsappSession {
   academiaId String
   key        String
