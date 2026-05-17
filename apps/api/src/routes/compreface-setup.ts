@@ -141,6 +141,50 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
     }
   })
 
+  // ── Criar nova aplicação GYMFLOW com API key real no CompreFace DB ─────────
+  app.post('/compreface-setup/create-gymflow-app', async (req, reply) => {
+    const key = req.headers['x-setup-key']
+    if (key !== 'cf-setup-2026') return reply.status(403).send({ error: 'Forbidden' })
+    const pool = makePool()
+    try {
+      const client = await pool.connect()
+      const { randomUUID } = await import('crypto')
+      const appGuid   = randomUUID()
+      const apiKey    = randomUUID()
+      const modelGuid = randomUUID()
+
+      // Verificar se já existe
+      const existing = await client.query(`SELECT id, name, api_key FROM "app" WHERE name = 'GYMFLOW' LIMIT 1`)
+      if (existing.rows.length > 0) {
+        client.release(); await pool.end()
+        return { ok: true, exists: true, app: existing.rows[0] }
+      }
+
+      // Descobrir próximo ID disponível
+      const maxId = await client.query(`SELECT MAX(id) as max FROM "app"`)
+      const nextAppId = (Number(maxId.rows[0].max ?? 0) + 1)
+
+      // Criar app
+      await client.query(
+        `INSERT INTO "app" (id, name, guid, api_key) VALUES ($1, 'GYMFLOW', $2, $3)`,
+        [nextAppId, appGuid, apiKey]
+      )
+
+      // Criar model recognition
+      await client.query(
+        `INSERT INTO "model" (name, guid, app_id, api_key, type, created_date)
+         VALUES ('GYMFLOW_Recognition', $1, $2, $3, 'R', NOW())`,
+        [modelGuid, nextAppId, apiKey]
+      )
+
+      client.release()
+      await pool.end()
+      return { ok: true, created: true, appId: nextAppId, apiKey, appGuid }
+    } catch (err: any) {
+      return reply.status(500).send({ error: err.message })
+    }
+  })
+
   // ── Corrigir oauth_client_details (Spring Security 5 exige prefixo {noop}) ──
   app.post('/compreface-setup/fix-oauth', async (req, reply) => {
     const key = req.headers['x-setup-key']
