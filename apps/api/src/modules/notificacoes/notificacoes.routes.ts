@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { authMiddleware } from '../../middleware/auth.middleware'
 import { seedWhatsappSession } from '../../integrations/whatsapp-baileys'
-import { getWhatsAppService } from '../../integrations/whatsapp-direct'
+import { getWhatsAppBridge } from '../../integrations/whatsapp-bridge'
 import { prisma } from '../../lib/prisma'
 
 export async function notificacoesRoutes(app: FastifyInstance) {
@@ -27,59 +27,36 @@ export async function notificacoesRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authMiddleware)
 
   // ─── Status da conexão WhatsApp ─────────────────────────────────────────────
-  app.get('/whatsapp/status', async (req) => {
-    const academiaId = (req as any).academiaId
-    // Verificar se tem sessão no banco
-    const temSessao = await prisma.whatsappSession.count({
-      where: { academiaId, key: 'creds' },
-    })
-    if (!temSessao) return { conectado: false }
-
-    try {
-      const svc = await getWhatsAppService(academiaId)
-      return { conectado: svc.isConectado() }
-    } catch {
-      return { conectado: false }
-    }
+  app.get('/whatsapp/status', async () => {
+    const bridge = getWhatsAppBridge()
+    if (!bridge.disponivel) return { conectado: false }
+    const conectado = await bridge.verificarConexao()
+    return { conectado }
   })
 
-  // ─── Conectar WhatsApp via sessão PostgreSQL ─────────────────────────────────
+  // ─── Conectar WhatsApp via bridge local ──────────────────────────────────────
   app.post('/whatsapp/conectar', async (req, reply) => {
-    const academiaId = (req as any).academiaId
-
-    // Verificar se tem sessão salva
-    const temSessao = await prisma.whatsappSession.count({
-      where: { academiaId, key: 'creds' },
-    })
-
-    if (!temSessao) {
+    const bridge = getWhatsAppBridge()
+    if (!bridge.disponivel) {
       return {
         conectado: false,
         qrCode: null,
-        message: 'Nenhuma sessão encontrada. Use o app local para conectar e sincronizar a sessão.',
+        message: 'Servidor WhatsApp local não configurado (WA_LOCAL_SERVER não definido)',
       }
     }
-
-    try {
-      const svc = await getWhatsAppService(academiaId)
-      const conectado = svc.isConectado()
-      return {
-        conectado,
-        qrCode: null,
-        message: conectado
-          ? '✅ WhatsApp conectado via sessão salva!'
-          : '⏳ Conectando... aguarde alguns segundos e verifique novamente.',
-      }
-    } catch (err: any) {
-      return reply.status(500).send({ error: `Erro ao iniciar serviço: ${err.message}` })
+    const conectado = await bridge.verificarConexao()
+    return {
+      conectado,
+      qrCode: null,
+      message: conectado
+        ? '✅ WhatsApp conectado via servidor local!'
+        : '❌ Servidor local offline. Verifique se o server.js está rodando na sua máquina.',
     }
   })
 
   // ─── Desconectar WhatsApp ───────────────────────────────────────────────────
-  app.post('/whatsapp/desconectar', async (req) => {
-    const academiaId = (req as any).academiaId
-    await prisma.whatsappSession.deleteMany({ where: { academiaId } })
-    return { ok: true, message: 'Sessão removida do banco. Reconecte via app local.' }
+  app.post('/whatsapp/desconectar', async () => {
+    return { ok: true, message: 'Para desconectar, pare o server.js na sua máquina.' }
   })
 
   // ─── Enviar mensagem de teste ───────────────────────────────────────────────
@@ -88,26 +65,14 @@ export async function notificacoesRoutes(app: FastifyInstance) {
     const { telefone, mensagem } = req.body as { telefone: string; mensagem: string }
     if (!telefone || !mensagem) return reply.status(400).send({ error: 'telefone e mensagem obrigatórios' })
 
-    try {
-      const svc = await getWhatsAppService(academiaId)
-      const ok = await svc.enviarMensagem(telefone, mensagem)
+    const bridge = getWhatsAppBridge()
+    const ok = await bridge.enviarMensagem(telefone, mensagem)
 
-      // Log
-      await prisma.notificacaoLog.create({
-        data: {
-          academiaId,
-          canal: 'WHATSAPP',
-          tipo: 'teste',
-          destinatario: telefone,
-          mensagem,
-          status: ok ? 'ENVIADO' : 'ERRO',
-        },
-      }).catch(() => {})
+    await prisma.notificacaoLog.create({
+      data: { academiaId, canal: 'WHATSAPP', tipo: 'teste', destinatario: telefone, mensagem, status: ok ? 'ENVIADO' : 'ERRO' },
+    }).catch(() => {})
 
-      return { ok, message: ok ? 'Mensagem enviada!' : 'Falha ao enviar — WhatsApp desconectado?' }
-    } catch (err: any) {
-      return reply.status(500).send({ error: err.message })
-    }
+    return { ok, message: ok ? 'Mensagem enviada!' : 'Falha — servidor WhatsApp offline?' }
   })
 
   // ─── Enviar cobrança manual ─────────────────────────────────────────────────
@@ -125,26 +90,14 @@ export async function notificacoesRoutes(app: FastifyInstance) {
     const mat = aluno.matriculas[0]
     const msgText = `Olá, *${aluno.nome}*! 👋\n\nLembrando que ${mat ? `seu plano *${mat.plano.nome}* vence em breve` : 'sua mensalidade está pendente'}.\n\nQualquer dúvida, fale conosco! 💪\n\n_GYMFLOW_`
 
-    try {
-      const svc = await getWhatsAppService(academiaId)
-      const ok = await svc.enviarMensagem(aluno.telefone, msgText)
+    const bridge = getWhatsAppBridge()
+    const ok = await bridge.enviarMensagem(aluno.telefone, msgText)
 
-      await prisma.notificacaoLog.create({
-        data: {
-          academiaId,
-          alunoId,
-          canal: 'WHATSAPP',
-          tipo: 'cobranca_manual',
-          destinatario: aluno.telefone,
-          mensagem: msgText,
-          status: ok ? 'ENVIADO' : 'ERRO',
-        },
-      }).catch(() => {})
+    await prisma.notificacaoLog.create({
+      data: { academiaId, alunoId, canal: 'WHATSAPP', tipo: 'cobranca_manual', destinatario: aluno.telefone, mensagem: msgText, status: ok ? 'ENVIADO' : 'ERRO' },
+    }).catch(() => {})
 
-      return { ok }
-    } catch (err: any) {
-      return reply.status(500).send({ error: err.message })
-    }
+    return { ok }
   })
 
   // ─── Log de notificações ────────────────────────────────────────────────────
