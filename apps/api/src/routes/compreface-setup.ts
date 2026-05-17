@@ -294,25 +294,34 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
     const results: any = {}
 
     // Testar cada endpoint do core com a imagem
-    const postEndpoints = [
-      '/find_faces',
-      '/calculate',
-      '/api/v1/faces',
-      '/api/v1/detection/detect',
-      '/api/v1/calculation/calculate',
+    // Testar /find_faces com face_plugins=calculator para obter embeddings
+    const variants = [
+      { name: 'find_faces-default',    ep: '/find_faces',  extra: {} },
+      { name: 'find_faces-calculator', ep: '/find_faces',  extra: { face_plugins: 'calculator' } },
+      { name: 'find_faces-all',        ep: '/find_faces',  extra: { face_plugins: 'calculator,age' } },
+      { name: 'calculate-timeout30',   ep: '/calculate',   extra: {} },
     ]
 
-    for (const ep of postEndpoints) {
+    for (const v of variants) {
       const form = new FormData()
       form.append('file', imageBuffer, { filename: 'test.jpg', contentType: 'image/jpeg' })
+      for (const [k, val] of Object.entries(v.extra)) {
+        form.append(k, val as string)
+      }
       try {
-        const r = await axios.post(`${CORE}${ep}`, form, {
+        const r = await axios.post(`${CORE}${v.ep}`, form, {
           headers: form.getHeaders(),
-          timeout: 15000,
+          timeout: 30000,
         })
-        results[ep] = { status: r.status, data: JSON.stringify(r.data).slice(0, 200) }
+        // Mostrar se embedding foi retornado
+        const hasEmb = JSON.stringify(r.data).includes('embedding')
+        results[v.name] = {
+          status: r.status,
+          hasEmbedding: hasEmb,
+          data: JSON.stringify(r.data).slice(0, 300),
+        }
       } catch (e: any) {
-        results[ep] = { status: e.response?.status, error: e.message?.slice(0, 80) }
+        results[v.name] = { status: e.response?.status, error: e.message?.slice(0, 80) }
       }
     }
 
