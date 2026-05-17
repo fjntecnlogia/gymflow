@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import { clsx } from 'clsx'
 import {
   LayoutDashboard, Users, ShieldCheck, DollarSign,
-  Calendar, BarChart2, Bell, Settings, LogOut, Package, Cpu,
+  Calendar, BarChart2, Bell, Settings, LogOut, Package, Cpu, Camera,
 } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
@@ -20,6 +20,7 @@ const navItems = [
   { href: '/planos', label: 'Planos', icon: Package },
   { href: '/acesso', label: 'Controle Acesso', icon: ShieldCheck },
   { href: '/catracas', label: 'Catracas', icon: Cpu },
+  { href: '/biometria', label: 'Biometria', icon: Camera },
   { href: '/financeiro', label: 'Financeiro', icon: DollarSign },
   { href: '/agenda', label: 'Agenda', icon: Calendar },
   { href: '/relatorios', label: 'Relatórios', icon: BarChart2 },

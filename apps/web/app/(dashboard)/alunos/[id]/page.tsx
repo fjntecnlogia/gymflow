@@ -24,6 +24,7 @@ interface Aluno {
   dataNascimento?: string
   fotoUrl?: string
   faceId?: string
+  faceRegistrada?: boolean
   status: string
   qrCodeToken: string
   observacoes?: string
@@ -228,6 +229,19 @@ export default function PerfilAlunoPage() {
             className="mt-4 w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-border text-xs font-semibold hover:border-cyan/40 transition-colors"
           >
             <Printer size={13} /> Imprimir QR Code
+          </button>
+
+          {/* Botão Biometria Facial */}
+          <button
+            onClick={() => setFaceModal(true)}
+            className={`mt-2 w-full flex items-center justify-center gap-2 py-2 rounded-xl border text-xs font-semibold transition-colors ${
+              aluno.faceRegistrada || aluno.faceId
+                ? 'border-green/30 text-green hover:border-green/60 bg-green/5'
+                : 'border-orange/30 text-orange hover:border-orange/60 bg-orange/5'
+            }`}
+          >
+            <Camera size={13} />
+            {aluno.faceRegistrada || aluno.faceId ? '✅ Face cadastrada — atualizar' : '📷 Cadastrar Biometria Facial'}
           </button>
         </div>
 

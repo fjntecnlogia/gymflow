@@ -6,7 +6,7 @@ import { api } from '@/lib/api'
 import toast from 'react-hot-toast'
 
 interface CadastrarFaceModalProps {
-  aluno: { id: string; nome: string; faceId?: string | null; fotoUrl?: string | null }
+  aluno: { id: string; nome: string; faceId?: string | null; faceRegistrada?: boolean; fotoUrl?: string | null }
   onClose: () => void
   onSucesso: () => void
 }
@@ -21,7 +21,7 @@ export function CadastrarFaceModal({ aluno, onClose, onSucesso }: CadastrarFaceM
     setPreview(fotoBase64)
 
     try {
-      await api.post(`/acesso/facial/cadastrar/${aluno.id}`, { foto: fotoBase64 })
+      await api.post(`/biometria/alunos/${aluno.id}/face`, { image: fotoBase64 })
       setEtapa('sucesso')
       toast.success(`Face de ${aluno.nome} cadastrada!`)
       onSucesso()
@@ -67,7 +67,7 @@ export function CadastrarFaceModal({ aluno, onClose, onSucesso }: CadastrarFaceM
               )}
               <p className="font-semibold">{aluno.nome}</p>
               <p className="text-xs text-muted mt-1">
-                {aluno.faceId ? '✅ Face já cadastrada — será substituída' : 'Sem biometria cadastrada'}
+                {(aluno.faceId || aluno.faceRegistrada) ? '✅ Face já cadastrada — será substituída' : 'Sem biometria cadastrada'}
               </p>
             </div>
 
