@@ -236,6 +236,40 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
     }
   })
 
+  // ── Proxy interno: capturar erro real do compreface-api ──────────────────
+  app.get('/compreface-setup/proxy-api-error', async (req, reply) => {
+    const key = req.headers['x-setup-key']
+    if (key !== 'cf-setup-2026') return reply.status(403).send({ error: 'Forbidden' })
+
+    const { default: axios } = await import('axios')
+    const apiKey = 'aa35b15c-56a9-4d9c-b582-ecde23ad0757'
+    const base = 'http://compreface-api.railway.internal:8080'
+
+    const endpoints = [
+      `/api/v1/recognition/subjects`,
+      `/actuator/health`,
+      `/actuator/loggers`,
+      `/api/v1/app-info`,
+    ]
+
+    const results: any = {}
+    for (const ep of endpoints) {
+      try {
+        const r = await axios.get(`${base}${ep}`, {
+          headers: { 'x-api-key': apiKey },
+          timeout: 8000,
+        })
+        results[ep] = { status: r.status, data: JSON.stringify(r.data).slice(0, 200) }
+      } catch (e: any) {
+        results[ep] = {
+          status: e.response?.status,
+          data: JSON.stringify(e.response?.data ?? e.message).slice(0, 200),
+        }
+      }
+    }
+    return results
+  })
+
   // ── Testar conectividade interna ao CompreFace Core e API ────────────────
   app.get('/compreface-setup/ping-services', async (req, reply) => {
     const key = req.headers['x-setup-key']
