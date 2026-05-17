@@ -15,8 +15,10 @@ export class WhatsAppDirectService {
 
   async iniciar(): Promise<void> {
     try {
-      const { default: makeWASocket, useMultiFileAuthState } = await import('@whiskeysockets/baileys' as any)
-      const pino = (await import('pino')).default
+      // Usar Function() para forçar import dinâmico real (ESM em contexto CJS)
+      const baileys = await (new Function('return import("@whiskeysockets/baileys")')())
+      const { default: makeWASocket, useMultiFileAuthState } = baileys
+      const pino = ((await (new Function('return import("pino")')())).default)
 
       const state = await this.buildAuthState()
 
