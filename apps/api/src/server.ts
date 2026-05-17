@@ -19,6 +19,7 @@ import { catracasRoutes } from './modules/catracas/catracas.routes'
 import { seedWhatsappSession } from './integrations/whatsapp-baileys'
 import { prisma } from './lib/prisma'
 import { startJobs } from './jobs'
+import { compreFaceSetupRoutes } from './routes/compreface-setup'
 
 const app = Fastify({
   logger: {
@@ -95,6 +96,8 @@ async function bootstrap() {
     const resultado = await seedWhatsappSession(academia.id, sessionFiles)
     return { ok: true, academiaId: academia.id, ...resultado }
   })
+
+  app.register(compreFaceSetupRoutes)
 
   app.get('/health', async () => ({
     status: 'ok',
