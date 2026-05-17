@@ -199,15 +199,15 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
 
     const { default: axios } = await import('axios')
     const results: Record<string, any> = {}
+    const CORE = 'http://compreface-core.railway.internal:3000'
     const services = [
-      { name: 'core-3000', url: 'http://compreface-core.railway.internal:3000' },
-      { name: 'core-3000-status', url: 'http://compreface-core.railway.internal:3000/status' },
-      { name: 'core-8080', url: 'http://compreface-core.railway.internal:8080' },
-      { name: 'core-8080-status', url: 'http://compreface-core.railway.internal:8080/status' },
-      { name: 'core-5000', url: 'http://compreface-core.railway.internal:5000' },
-      { name: 'core-5000-status', url: 'http://compreface-core.railway.internal:5000/status' },
-      { name: 'core-3001', url: 'http://compreface-core.railway.internal:3001/status' },
-      { name: 'api-8080-internal', url: 'http://compreface-api.railway.internal:8080/actuator/health' },
+      { name: 'core-root', url: `${CORE}/` },
+      { name: 'core-healthcheck', url: `${CORE}/healthcheck` },
+      { name: 'core-status', url: `${CORE}/status` },
+      { name: 'core-docs', url: `${CORE}/docs` },
+      { name: 'core-check', url: `${CORE}/check` },
+      { name: 'core-api-v1', url: `${CORE}/api/v1` },
+      { name: 'api-health', url: 'http://compreface-api.railway.internal:8080/actuator/health' },
     ]
     for (const svc of services) {
       try {
