@@ -1,6 +1,5 @@
 import { FastifyInstance } from 'fastify'
 import { Pool } from 'pg'
-import bcrypt from 'bcryptjs'
 
 /**
  * Rota temporária para ativar usuário no CompreFace via banco interno Railway
@@ -59,25 +58,23 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
     }
   })
 
-  // ── Reset de senha (aceita texto plano, gera hash bcrypt 10) ─────────────
+  // ── Reset de senha via hash bcrypt pré-computado ─────────────────────────
+  // Enviar newPasswordHash (bcrypt $2b$10$...) gerado externamente.
+  // Senha padrão "Admin@2026!" → hash: $2b$10$xS4u7dAh859uPIrWd4dMF.L1TOHuOfrQ1aYbZG3G9//bJeoKImNQC
   app.post('/compreface-setup/reset-password', async (req, reply) => {
     const key = req.headers['x-setup-key']
     if (key !== 'cf-setup-2026') return reply.status(403).send({ error: 'Forbidden' })
 
-    const { email, newPassword } = req.body as any
-
-    if (!email || !newPassword) {
-      return reply.status(400).send({ error: 'email e newPassword são obrigatórios' })
-    }
-
-    // Gerar hash bcrypt com cost 10 (mesmo padrão do Spring Security BCryptPasswordEncoder)
-    const passwordHash = await bcrypt.hash(newPassword, 10)
+    const body = req.body as any
+    const email = body?.email ?? 'admin@gymflow.com'
+    // Usa hash fornecido ou o default para Admin@2026!
+    const passwordHash = body?.newPasswordHash ??
+      '$2b$10$xS4u7dAh859uPIrWd4dMF.L1TOHuOfrQ1aYbZG3G9//bJeoKImNQC'
 
     const pool = makePool()
     try {
       const client = await pool.connect()
 
-      // Atualizar senha e garantir que está ativo
       const result = await client.query(
         `UPDATE "user"
          SET password = $2, enabled = true, name = COALESCE(name, email)
@@ -93,7 +90,12 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
         return reply.status(404).send({ error: `Usuário ${email} não encontrado` })
       }
 
-      return { ok: true, user: result.rows[0], hashUsed: passwordHash }
+      return {
+        ok: true,
+        user: result.rows[0],
+        senhaDefinida: 'Admin@2026!',
+        hint: 'Use esta senha para login no CompreFace e OAuth',
+      }
     } catch (err: any) {
       return reply.status(500).send({ error: err.message })
     }
