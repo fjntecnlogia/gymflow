@@ -270,6 +270,55 @@ export async function compreFaceSetupRoutes(app: FastifyInstance) {
     return results
   })
 
+  // ── Testar Core com imagem real (baixa foto de teste e processa) ─────────
+  app.get('/compreface-setup/test-core', async (req, reply) => {
+    const key = req.headers['x-setup-key']
+    if (key !== 'cf-setup-2026') return reply.status(403).send({ error: 'Forbidden' })
+
+    const { default: axios } = await import('axios')
+    const FormData = require('form-data')
+    const CORE = 'http://compreface-core.railway.internal:3000'
+
+    // Baixar uma imagem de face de teste (foto pública do Lorem Face)
+    let imageBuffer: Buffer
+    try {
+      const imgRes = await axios.get('https://thispersondoesnotexist.com', {
+        responseType: 'arraybuffer',
+        timeout: 10000,
+      })
+      imageBuffer = Buffer.from(imgRes.data)
+    } catch (e: any) {
+      return { error: `Falha ao baixar imagem de teste: ${e.message}` }
+    }
+
+    const results: any = {}
+
+    // Testar cada endpoint do core com a imagem
+    const postEndpoints = [
+      '/find_faces',
+      '/calculate',
+      '/api/v1/faces',
+      '/api/v1/detection/detect',
+      '/api/v1/calculation/calculate',
+    ]
+
+    for (const ep of postEndpoints) {
+      const form = new FormData()
+      form.append('file', imageBuffer, { filename: 'test.jpg', contentType: 'image/jpeg' })
+      try {
+        const r = await axios.post(`${CORE}${ep}`, form, {
+          headers: form.getHeaders(),
+          timeout: 15000,
+        })
+        results[ep] = { status: r.status, data: JSON.stringify(r.data).slice(0, 200) }
+      } catch (e: any) {
+        results[ep] = { status: e.response?.status, error: e.message?.slice(0, 80) }
+      }
+    }
+
+    return { imageSize: imageBuffer.length, results }
+  })
+
   // ── Testar conectividade interna ao CompreFace Core e API ────────────────
   app.get('/compreface-setup/ping-services', async (req, reply) => {
     const key = req.headers['x-setup-key']
