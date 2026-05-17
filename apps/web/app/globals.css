@@ -18,6 +18,76 @@
 
 body { background: var(--bg-canvas); color: #fff; }
 
+/* ─── Inputs, Selects, Textareas — estilo global ─────────────────────────── */
+input,
+select,
+textarea {
+  background-color: #111119 !important;
+  color: #ffffff !important;
+  border-color: #2A2A3A;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #8888AA !important;
+}
+
+/* Dropdown nativo do select */
+select option {
+  background-color: #1A1A26 !important;
+  color: #ffffff !important;
+}
+
+/* Autocomplete / autofill do browser */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #111119 inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff;
+}
+
+/* ─── Classe .input (usada em todo o sistema) ────────────────────────────── */
+.input {
+  width: 100%;
+  background-color: #111119;
+  border: 1px solid #2A2A3A;
+  border-radius: 8px;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  color: #ffffff;
+  outline: none;
+  transition: border-color 0.15s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.input:focus {
+  border-color: #00E5FF;
+}
+
+.input::placeholder {
+  color: #8888AA;
+}
+
+.input option {
+  background-color: #1A1A26;
+  color: #ffffff;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────── */
+.scrollbar-thin::-webkit-scrollbar { width: 4px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #2A2A3A; border-radius: 4px; }
+
+/* Scrollbar global */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2A2A3A; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3A3A4A; }
+
+/* ─── Gradientes ─────────────────────────────────────────────────────────── */
 .gradient-text {
   background: linear-gradient(135deg, #00E5FF, #0066FF);
   -webkit-background-clip: text;
@@ -30,12 +100,34 @@ body { background: var(--bg-canvas); color: #fff; }
 }
 .gradient-btn:hover { filter: brightness(1.1); }
 
+/* ─── Card ───────────────────────────────────────────────────────────────── */
 .card {
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: 16px;
 }
 
-.scrollbar-thin::-webkit-scrollbar { width: 4px; }
-.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background: #2A2A3A; border-radius: 4px; }
+/* ─── Date input ─────────────────────────────────────────────────────────── */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+input[type="date"]::-webkit-datetime-edit {
+  color: #ffffff;
+}
+
+/* ─── Checkbox ───────────────────────────────────────────────────────────── */
+input[type="checkbox"] {
+  accent-color: #00E5FF;
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+/* ─── Number input — remover arrows ─────────────────────────────────────── */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 0.3;
+}
