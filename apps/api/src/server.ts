@@ -16,6 +16,8 @@ import { adminRoutes } from './modules/admin/admin.routes'
 import { notificacoesRoutes } from './modules/notificacoes/notificacoes.routes'
 import { billingRoutes } from './modules/billing/billing.routes'
 import { catracasRoutes } from './modules/catracas/catracas.routes'
+import { seedWhatsappSession } from './integrations/whatsapp-baileys'
+import { prisma } from './lib/prisma'
 import { startJobs } from './jobs'
 
 const app = Fastify({
@@ -78,6 +80,21 @@ async function bootstrap() {
   app.register(notificacoesRoutes, { prefix: '/notificacoes' })
   app.register(billingRoutes,      { prefix: '/billing' })
   app.register(catracasRoutes,     { prefix: '/catracas' })
+
+  // ─── Seed temporário WhatsApp (público, chave secreta) ─────────────────────
+  app.post('/seed-whatsapp', async (req, reply) => {
+    if (req.headers['x-seed-key'] !== 'gymflow-seed-2026') {
+      return reply.status(403).send({ error: 'Forbidden' })
+    }
+    const { academiaSlug, sessionFiles } = req.body as any
+    const academia = await prisma.academia.findUnique({ where: { slug: academiaSlug } })
+    if (!academia) return reply.status(404).send({ error: 'Academia não encontrada' })
+    if (!sessionFiles || Object.keys(sessionFiles).length === 0) {
+      return reply.status(400).send({ error: 'sessionFiles obrigatório' })
+    }
+    const resultado = await seedWhatsappSession(academia.id, sessionFiles)
+    return { ok: true, academiaId: academia.id, ...resultado }
+  })
 
   app.get('/health', async () => ({
     status: 'ok',
