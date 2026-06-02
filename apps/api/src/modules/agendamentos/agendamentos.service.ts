@@ -41,12 +41,20 @@ export class AgendamentosService {
 
     // Notificações fire-and-forget — nunca bloqueiam o response do lead.
     // Cada canal é independente: se um falhar, os outros seguem.
-    this.notificarAdminEmail(ag).catch((err) => {
-      console.error('[Agendamento] Falha email admin:', err?.message)
+    console.log('[Agendamento] criado id=' + ag.id + ' email=' + (ag.email ?? '(sem email)') + ' — disparando notificações...')
+    console.log('[Agendamento] RESEND_API_KEY=' + (process.env.RESEND_API_KEY ? 'SET (' + process.env.RESEND_API_KEY.length + ' chars)' : 'NOT SET'))
+    console.log('[Agendamento] ADMIN_LEAD_EMAIL=' + (process.env.ADMIN_LEAD_EMAIL ?? '(default)'))
+
+    this.notificarAdminEmail(ag).then(() => {
+      console.log('[Agendamento] email admin enviado OK')
+    }).catch((err) => {
+      console.error('[Agendamento] Falha email admin:', err?.message, err?.stack?.slice(0, 300))
     })
     if (ag.email) {
-      this.enviarConfirmacaoCliente(ag.email, ag.nome, ag.telefone).catch((err) => {
-        console.error('[Agendamento] Falha email cliente:', err?.message)
+      this.enviarConfirmacaoCliente(ag.email, ag.nome, ag.telefone).then(() => {
+        console.log('[Agendamento] email cliente enviado OK')
+      }).catch((err) => {
+        console.error('[Agendamento] Falha email cliente:', err?.message, err?.stack?.slice(0, 300))
       })
     }
     this.notificarAdminWhatsApp(ag).catch((err) => {

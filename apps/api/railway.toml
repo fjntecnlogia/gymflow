@@ -1,0 +1,14 @@
+# Railway service config — prioridade MÁXIMA sobre Dockerfile CMD, Procfile,
+# e qualquer Custom Start Command configurado no painel.
+#
+# Usamos tsx em runtime (sem build TypeScript separado) pra evitar problemas
+# de dist/ stale ou tsc falhando silenciosamente.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "npx prisma db push --accept-data-loss && npx tsx src/server.ts"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
