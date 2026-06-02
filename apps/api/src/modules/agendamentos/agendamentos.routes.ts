@@ -48,21 +48,38 @@ export async function agendamentosRoutes(app: FastifyInstance) {
     const { to } = (req.body as any) ?? {}
     if (!to) return reply.status(400).send({ error: 'to é obrigatório' })
 
-    console.log('[DEBUG /debug-email] iniciando envio pra ' + to)
-    console.log('[DEBUG /debug-email] RESEND_API_KEY=' + (process.env.RESEND_API_KEY ? 'SET' : 'NOT SET'))
-    console.log('[DEBUG /debug-email] EMAIL_FROM=' + (process.env.EMAIL_FROM ?? '(default)'))
+    const env = {
+      RESEND_API_KEY_set: !!process.env.RESEND_API_KEY,
+      RESEND_API_KEY_length: process.env.RESEND_API_KEY?.length ?? 0,
+      RESEND_API_KEY_prefix: process.env.RESEND_API_KEY?.slice(0, 6) ?? null,
+      EMAIL_FROM: process.env.EMAIL_FROM ?? '(default)',
+      ADMIN_LEAD_EMAIL: process.env.ADMIN_LEAD_EMAIL ?? '(default)',
+    }
 
+    // Chama Resend DIRETO (sem passar pelo wrapper enviarEmail) pra capturar
+    // a resposta crua e retornar pro client. Assim debugamos sem precisar
+    // dos logs do Railway (que estão sumindo).
     try {
-      const ok = await enviarEmail({
+      const { Resend } = await import('resend')
+      if (!process.env.RESEND_API_KEY) {
+        return reply.status(200).send({ ok: false, env, error: 'RESEND_API_KEY ausente' })
+      }
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      const result = await resend.emails.send({
+        from: process.env.EMAIL_FROM ?? 'noreply@gymflowgestor.com.br',
         to,
         subject: 'Teste GymFlow — Debug Resend',
-        html: '<h2>Teste de email</h2><p>Se você está vendo isso, o Resend funcionou.</p><p>Origem: <strong>contato@gymflowgestor.com.br</strong></p>',
+        html: '<h2>Teste</h2><p>Se chegou, Resend OK.</p>',
       })
-      console.log('[DEBUG /debug-email] enviarEmail retornou: ' + ok)
-      return reply.status(200).send({ ok, to })
+      return reply.status(200).send({ ok: !result.error, env, resendResponse: result })
     } catch (err: any) {
-      console.error('[DEBUG /debug-email] ERRO:', err?.message, err?.stack?.slice(0, 500))
-      return reply.status(500).send({ error: err?.message ?? 'unknown', stack: err?.stack?.slice(0, 500) })
+      return reply.status(200).send({
+        ok: false,
+        env,
+        error: err?.message ?? 'unknown',
+        name: err?.name,
+        stack: err?.stack?.slice(0, 800),
+      })
     }
   })
 }
