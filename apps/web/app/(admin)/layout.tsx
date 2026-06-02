@@ -14,12 +14,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
         <nav className="flex-1 py-4 flex flex-col gap-0.5">
           {[
-            { href: '/admin',            label: 'Overview' },
-            { href: '/admin/academias',  label: 'Academias' },
-            { href: '/admin/receita',    label: 'Receita / MRR' },
-            { href: '/admin/planos',     label: 'Planos SaaS' },
-            { href: '/admin/suporte',    label: 'Suporte' },
-            { href: '/admin/sistema',    label: 'Sistema' },
+            { href: '/admin',              label: 'Overview' },
+            { href: '/admin/agendamentos', label: 'Agendamentos' },
+            { href: '/admin/academias',    label: 'Academias' },
+            { href: '/admin/receita',      label: 'Receita / MRR' },
+            { href: '/admin/planos',       label: 'Planos SaaS' },
+            { href: '/admin/suporte',      label: 'Suporte' },
+            { href: '/admin/sistema',      label: 'Sistema' },
           ].map(({ href, label }) => (
             <Link
               key={href}

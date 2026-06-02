@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: 'GymFlow Gestor — Sua academia. Sob controle.',
   description:
-    'Pare de perder dinheiro no WhatsApp. Controle de acesso, cobrança automática e app para alunos em uma única plataforma. 14 dias grátis, sem cartão.',
+    'Pare de perder dinheiro no WhatsApp. Controle de acesso, cobrança automática e app para alunos em uma única plataforma. Agende uma demonstração personalizada.',
   keywords: [
     'gestão de academia',
     'software para academia',
@@ -47,13 +47,13 @@ export const metadata: Metadata = {
     siteName: 'GymFlow Gestor',
     title: 'GymFlow Gestor — Sua academia. Sob controle.',
     description:
-      'Controle de acesso, cobrança automática no PIX e app para alunos. Configurado em 24h. 14 dias grátis.',
+      'Controle de acesso, cobrança automática no PIX e app para alunos. Agende uma demonstração de 30 minutos com nosso time.',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'GymFlow Gestor — Sua academia. Sob controle.',
     description:
-      'Controle de acesso, cobrança automática no PIX e app para alunos. Configurado em 24h. 14 dias grátis.',
+      'Controle de acesso, cobrança automática no PIX e app para alunos. Agende uma demonstração de 30 minutos com nosso time.',
   },
   alternates: { canonical: SITE_URL },
 }
@@ -179,7 +179,7 @@ const faq = [
   },
   {
     q: 'Tem fidelidade ou multa de cancelamento?',
-    a: 'Não. Você cancela quando quiser, sem multa, sem pegadinha. Os 14 dias de teste também não pedem cartão de crédito.',
+    a: 'Não. Você cancela quando quiser, sem multa, sem pegadinha. Pagamento mensal — se não servir, cancela e pronto.',
   },
   {
     q: 'Funciona em academia com mais de uma unidade?',
@@ -239,8 +239,8 @@ export default function LandingPage() {
         </div>
         <div className="flex items-center gap-3">
           <Link href="/login" className="text-sm text-muted hover:text-white transition-colors">Entrar</Link>
-          <Link href="/planos-saas" className="gradient-btn text-dark font-bold text-sm px-4 py-2 rounded-lg">
-            Testar grátis
+          <Link href="/agendar" className="gradient-btn text-dark font-bold text-sm px-4 py-2 rounded-lg">
+            Agendar demo
           </Link>
         </div>
       </nav>
@@ -260,14 +260,14 @@ export default function LandingPage() {
           O GymFlow Gestor automatiza o controle de acesso, as cobranças e os alunos — para você parar de apagar incêndio e começar a crescer.
         </p>
         <div className="flex items-center justify-center gap-3 flex-wrap">
-          <Link href="/planos-saas" className="gradient-btn text-dark font-bold text-base px-8 py-4 rounded-xl inline-flex items-center gap-2">
-            Testar grátis por 14 dias <ArrowRight size={18} />
+          <Link href="/agendar" className="gradient-btn text-dark font-bold text-base px-8 py-4 rounded-xl inline-flex items-center gap-2">
+            Agendar demonstração <ArrowRight size={18} />
           </Link>
           <a href="#demo" className="border border-dark-border text-white text-base px-8 py-4 rounded-xl hover:border-muted transition-colors">
-            Ver demonstração
+            Ver na prática
           </a>
         </div>
-        <p className="text-xs text-muted mt-4">Sem cartão de crédito · Cancela quando quiser · Funciona em 24h</p>
+        <p className="text-xs text-muted mt-4">Demo de 30 min · Personalizada pra sua academia · Resposta em até 1h útil</p>
       </section>
 
       {/* ───── MÉTRICAS / PROVA SOCIAL ───── */}
@@ -484,7 +484,7 @@ export default function LandingPage() {
         <div className="mb-12">
           <div className="text-xs font-bold uppercase tracking-widest text-cyan mb-3">Preço justo</div>
           <h2 className="font-display text-3xl md:text-4xl font-bold mb-2">Escolha seu plano.</h2>
-          <p className="text-muted">14 dias grátis em todos os planos. Sem cartão agora.</p>
+          <p className="text-muted">Conheça na demo e escolha o plano que cabe na sua academia.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {plans.map((p) => (
@@ -513,14 +513,14 @@ export default function LandingPage() {
                 ))}
               </ul>
               <Link
-                href="/planos-saas"
+                href="/agendar"
                 className={`w-full block text-center py-3 rounded-xl font-bold text-sm ${
                   p.featured
                     ? 'gradient-btn text-dark'
                     : 'border border-dark-border hover:border-muted text-white transition-colors'
                 }`}
               >
-                Começar grátis
+                Agendar demonstração
               </Link>
             </div>
           ))}
@@ -558,12 +558,12 @@ export default function LandingPage() {
             <span className="gradient-text">do modo sobrevivência</span>.
           </h2>
           <p className="text-muted text-base md:text-lg max-w-xl mx-auto mb-8">
-            14 dias grátis. Sem cartão. Se em 30 dias após contratar você não tiver visto valor real,
+            Demo de 30 min, personalizada pra sua academia. Se contratar e em 30 dias não tiver visto valor real,
             <span className="text-white"> devolvemos 100% do que você pagou.</span>
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap mb-6">
-            <Link href="/planos-saas" className="gradient-btn text-dark font-bold text-base px-8 py-4 rounded-xl inline-flex items-center gap-2">
-              Começar agora — é grátis <ArrowRight size={18} />
+            <Link href="/agendar" className="gradient-btn text-dark font-bold text-base px-8 py-4 rounded-xl inline-flex items-center gap-2">
+              Agendar minha demonstração <ArrowRight size={18} />
             </Link>
             <a
               href="https://wa.me/5565996952828"
@@ -575,7 +575,7 @@ export default function LandingPage() {
             </a>
           </div>
           <div className="flex items-center justify-center gap-6 text-xs text-muted flex-wrap">
-            <span className="inline-flex items-center gap-1.5"><Check size={12} className="text-green" /> Sem cartão</span>
+            <span className="inline-flex items-center gap-1.5"><Check size={12} className="text-green" /> Demo de 30 min</span>
             <span className="inline-flex items-center gap-1.5"><Check size={12} className="text-green" /> Sem fidelidade</span>
             <span className="inline-flex items-center gap-1.5"><Check size={12} className="text-green" /> Cancela quando quiser</span>
           </div>
@@ -607,7 +607,7 @@ export default function LandingPage() {
               <div className="text-xs font-bold uppercase tracking-widest text-white mb-3">Empresa</div>
               <ul className="space-y-2 text-sm text-muted">
                 <li><Link href="/login" className="hover:text-white transition-colors">Entrar</Link></li>
-                <li><Link href="/planos-saas" className="hover:text-white transition-colors">Criar conta</Link></li>
+                <li><Link href="/agendar" className="hover:text-white transition-colors">Criar conta</Link></li>
                 <li><a href="#" className="hover:text-white transition-colors">Termos de uso</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Privacidade</a></li>
               </ul>
