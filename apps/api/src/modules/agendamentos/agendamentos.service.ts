@@ -1,6 +1,11 @@
 import { prisma } from '../../lib/prisma'
 import { getWhatsAppBridge } from '../../integrations/whatsapp-bridge'
 import {
+  enviarEmail,
+  templateConfirmacaoCliente,
+  templateLeadAdmin,
+} from '../../integrations/email'
+import {
   CriarAgendamentoDTO,
   FiltroAgendamentoDTO,
   StatusApi,
@@ -9,6 +14,7 @@ import {
 } from './agendamentos.schema'
 
 const ADMIN_WHATSAPP = process.env.ADMIN_LEAD_WHATSAPP ?? '5565996952828'
+const ADMIN_EMAIL = process.env.ADMIN_LEAD_EMAIL ?? 'fjntecnologia2022@gmail.com'
 
 const FAIXA_ALUNOS_LABEL: Record<string, string> = {
   '0-50': 'Até 50',
@@ -33,12 +39,51 @@ export class AgendamentosService {
       },
     })
 
-    // Notificação fire-and-forget — nunca bloqueia o response do lead
-    this.notificarAdmin(ag).catch((err) => {
-      console.error('[Agendamento] Falha notificando admin:', err?.message)
+    // Notificações fire-and-forget — nunca bloqueiam o response do lead.
+    // Cada canal é independente: se um falhar, os outros seguem.
+    this.notificarAdminEmail(ag).catch((err) => {
+      console.error('[Agendamento] Falha email admin:', err?.message)
+    })
+    if (ag.email) {
+      this.enviarConfirmacaoCliente(ag.email, ag.nome, ag.telefone).catch((err) => {
+        console.error('[Agendamento] Falha email cliente:', err?.message)
+      })
+    }
+    this.notificarAdminWhatsApp(ag).catch((err) => {
+      console.error('[Agendamento] Falha WhatsApp admin:', err?.message)
     })
 
     return serializarAgendamento(ag)
+  }
+
+  // ─── Email pro admin ─────────────────────────────────────
+  private async notificarAdminEmail(ag: {
+    nome: string
+    telefone: string
+    email: string | null
+    academiaNome: string
+    cidade: string
+    numAlunos: string
+    horarioPreferido: string
+    observacao: string | null
+  }) {
+    const ok = await enviarEmail({
+      to: ADMIN_EMAIL,
+      subject: `🚨 Novo lead: ${ag.nome} — ${ag.academiaNome} (${ag.cidade})`,
+      html: templateLeadAdmin(ag),
+      replyTo: ag.email ?? undefined,
+    })
+    if (!ok) console.warn('[Agendamento] Email admin não enviado (Resend não configurado?)')
+  }
+
+  // ─── Email de confirmação pro cliente ────────────────────
+  private async enviarConfirmacaoCliente(email: string, nome: string, telefone: string) {
+    const ok = await enviarEmail({
+      to: email,
+      subject: 'Recebemos seu pedido — GymFlow Gestor',
+      html: templateConfirmacaoCliente(nome, telefone),
+    })
+    if (!ok) console.warn('[Agendamento] Email confirmação cliente não enviado')
   }
 
   async listar(filtros: FiltroAgendamentoDTO) {
@@ -85,8 +130,8 @@ export class AgendamentosService {
     return serializarAgendamento(ag)
   }
 
-  // ─── Notificação WhatsApp p/ time comercial ──────────────
-  private async notificarAdmin(ag: {
+  // ─── Notificação WhatsApp p/ time comercial (bonus, opcional) ──
+  private async notificarAdminWhatsApp(ag: {
     nome: string
     telefone: string
     email: string | null
