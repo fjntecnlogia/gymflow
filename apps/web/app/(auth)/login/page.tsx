@@ -103,7 +103,7 @@ export default function LoginPage() {
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan to-blue flex items-center justify-center font-display font-black text-2xl text-dark mx-auto mb-4">
             G
           </div>
-          <h1 className="font-display text-2xl font-extrabold"><span className="text-cyan">GYM</span>FLOW</h1>
+          <h1 className="font-display text-2xl font-extrabold"><span className="text-cyan">Gym</span>Flow <span className="text-muted font-medium text-xl">Gestor</span></h1>
           <p className="text-muted text-sm mt-1">
             {modo === 'recovery' ? 'Defina sua nova senha' : modo === 'recovery_ok' ? 'Senha alterada!' : 'Faça login na sua conta'}
           </p>
@@ -189,7 +189,7 @@ export default function LoginPage() {
             </Button>
             <p className="text-center text-xs text-muted">
               Não tem conta?{' '}
-              <a href="/cadastro" className="text-cyan font-semibold hover:underline">Criar academia grátis</a>
+              <a href="/planos-saas" className="text-cyan font-semibold hover:underline">Criar academia grátis</a>
             </p>
           </form>
         )}
