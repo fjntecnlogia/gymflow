@@ -1,6 +1,13 @@
 import { FastifyInstance } from 'fastify'
 import { adminMiddleware } from '../../middleware/auth.middleware'
 import { prisma } from '../../lib/prisma'
+import { AgendamentosService } from '../agendamentos/agendamentos.service'
+import {
+  atualizarStatusAgendamentoSchema,
+  filtroAgendamentoSchema,
+} from '../agendamentos/agendamentos.schema'
+
+const agendamentosService = new AgendamentosService()
 
 export async function adminRoutes(app: FastifyInstance) {
   app.addHook('onRequest', adminMiddleware)
@@ -32,5 +39,27 @@ export async function adminRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string }
     const { status } = req.body as { status: string }
     return prisma.academia.update({ where: { id }, data: { status: status as any } })
+  })
+
+  // ─── AGENDAMENTOS (leads de demonstração) ──────────────
+  // Retorna array bruto (sem envelope) — o frontend admin/agendamentos/page.tsx
+  // espera Array.isArray(data).
+
+  app.get('/agendamentos', async (req) => {
+    const filtros = filtroAgendamentoSchema.parse(req.query)
+    return agendamentosService.listar(filtros)
+  })
+
+  app.patch('/agendamentos/:id', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const { status } = atualizarStatusAgendamentoSchema.parse(req.body)
+    try {
+      return await agendamentosService.atualizarStatus(id, status)
+    } catch (err: any) {
+      if (err?.code === 'P2025') {
+        return reply.status(404).send({ error: 'Agendamento não encontrado' })
+      }
+      throw err
+    }
   })
 }

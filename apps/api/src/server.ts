@@ -17,6 +17,7 @@ import { notificacoesRoutes } from './modules/notificacoes/notificacoes.routes'
 import { billingRoutes } from './modules/billing/billing.routes'
 import { catracasRoutes } from './modules/catracas/catracas.routes'
 import { biometriaRoutes } from './modules/biometria/biometria.routes'
+import { agendamentosRoutes } from './modules/agendamentos/agendamentos.routes'
 import { seedWhatsappSession } from './integrations/whatsapp-baileys'
 import { prisma } from './lib/prisma'
 import { startJobs } from './jobs'
@@ -55,7 +56,7 @@ async function bootstrap() {
 
   await app.register(swagger, {
     openapi: {
-      info: { title: 'GYMFLOW API', version: '1.0.0', description: 'SaaS de gestão para academias' },
+      info: { title: 'GymFlow Gestor API', version: '1.0.0', description: 'SaaS de gestão para academias' },
       servers: [{ url: process.env.API_URL ?? 'http://localhost:3001' }],
       security: [{ bearerAuth: [] }],
       components: {
@@ -83,6 +84,7 @@ async function bootstrap() {
   app.register(billingRoutes,      { prefix: '/billing' })
   app.register(catracasRoutes,     { prefix: '/catracas' })
   app.register(biometriaRoutes,   { prefix: '/biometria' })
+  app.register(agendamentosRoutes, { prefix: '/agendamentos' })
 
   // ─── Seed temporário WhatsApp (público, chave secreta) ─────────────────────
   app.post('/seed-whatsapp', async (req, reply) => {
@@ -121,7 +123,7 @@ async function bootstrap() {
 
   const porta = Number(process.env.PORT) || 3001
   await app.listen({ port: porta, host: '0.0.0.0' })
-  console.log(`\n🚀 GYMFLOW API rodando em http://localhost:${porta}`)
+  console.log(`\n🚀 GymFlow Gestor API rodando em http://localhost:${porta}`)
   console.log(`📚 Documentação: http://localhost:${porta}/docs\n`)
 }
 

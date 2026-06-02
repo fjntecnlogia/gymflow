@@ -25,13 +25,13 @@ model Academia {
   criadoEm      DateTime       @default(now())
   atualizadoEm  DateTime       @updatedAt
 
-  usuarios   Usuario[]
-  alunos     Aluno[]
-  planos     Plano[]
-  matriculas Matricula[]
-  acessos    RegistroAcesso[]
-  pagamentos Pagamento[]
-  catracas   Catraca[]
+  usuarios       Usuario[]
+  alunos         Aluno[]
+  planos         Plano[]
+  matriculas     Matricula[]
+  acessos        RegistroAcesso[]
+  pagamentos     Pagamento[]
+  catracas       Catraca[]
   notificacoes   NotificacaoLog[]
   faceEmbeddings FaceEmbedding[]
 
@@ -54,16 +54,16 @@ enum StatusAcademia {
 // ─── USUARIOS (Dono / Staff) ──────────────────────────
 
 model Usuario {
-  id          String      @id @default(cuid())
-  academiaId  String
-  supabaseId  String      @unique
-  nome        String
-  email       String
-  telefone    String?
-  role        RoleUsuario @default(STAFF)
-  ativo       Boolean     @default(true)
-  criadoEm   DateTime    @default(now())
-  atualizadoEm DateTime   @updatedAt
+  id           String      @id @default(cuid())
+  academiaId   String
+  supabaseId   String      @unique
+  nome         String
+  email        String
+  telefone     String?
+  role         RoleUsuario @default(STAFF)
+  ativo        Boolean     @default(true)
+  criadoEm     DateTime    @default(now())
+  atualizadoEm DateTime    @updatedAt
 
   academia Academia @relation(fields: [academiaId], references: [id], onDelete: Cascade)
 
@@ -94,16 +94,16 @@ model Aluno {
   qrCodeToken    String      @unique @default(cuid())
   status         StatusAluno @default(ATIVO)
   observacoes    String?
-  criadoEm      DateTime    @default(now())
-  atualizadoEm  DateTime    @updatedAt
+  criadoEm       DateTime    @default(now())
+  atualizadoEm   DateTime    @updatedAt
 
-  faceRegistrada Boolean  @default(false)
+  faceRegistrada Boolean @default(false)
 
-  academia       Academia         @relation(fields: [academiaId], references: [id], onDelete: Cascade)
-  matriculas     Matricula[]
-  acessos        RegistroAcesso[]
-  pagamentos     Pagamento[]
-  faceEmbedding  FaceEmbedding?
+  academia      Academia         @relation(fields: [academiaId], references: [id], onDelete: Cascade)
+  matriculas    Matricula[]
+  acessos       RegistroAcesso[]
+  pagamentos    Pagamento[]
+  faceEmbedding FaceEmbedding?
 
   @@unique([academiaId, email])
   @@index([academiaId, status])
@@ -130,8 +130,8 @@ model Plano {
   ativo           Boolean   @default(true)
   permiteCongelar Boolean   @default(false)
   limiteTreinos   Int?
-  criadoEm       DateTime  @default(now())
-  atualizadoEm   DateTime  @updatedAt
+  criadoEm        DateTime  @default(now())
+  atualizadoEm    DateTime  @updatedAt
 
   academia   Academia    @relation(fields: [academiaId], references: [id], onDelete: Cascade)
   matriculas Matricula[]
@@ -161,8 +161,8 @@ model Matricula {
   valorPago      Decimal         @db.Decimal(10, 2)
   status         StatusMatricula @default(ATIVA)
   observacoes    String?
-  criadoEm      DateTime        @default(now())
-  atualizadoEm  DateTime        @updatedAt
+  criadoEm       DateTime        @default(now())
+  atualizadoEm   DateTime        @updatedAt
 
   academia   Academia    @relation(fields: [academiaId], references: [id], onDelete: Cascade)
   aluno      Aluno       @relation(fields: [alunoId], references: [id])
@@ -192,7 +192,7 @@ model Catraca {
   apiKey       String
   ativa        Boolean  @default(true)
   ultimoStatus String?
-  criadoEm    DateTime @default(now())
+  criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
   academia Academia         @relation(fields: [academiaId], references: [id], onDelete: Cascade)
@@ -212,11 +212,11 @@ model RegistroAcesso {
   resultado      ResultadoAcesso
   motivoBloqueio String?
   ipDispositivo  String?
-  criadoEm      DateTime        @default(now())
+  criadoEm       DateTime        @default(now())
 
-  academia Academia  @relation(fields: [academiaId], references: [id], onDelete: Cascade)
-  aluno    Aluno     @relation(fields: [alunoId], references: [id])
-  catraca  Catraca?  @relation(fields: [catracaId], references: [id])
+  academia Academia @relation(fields: [academiaId], references: [id], onDelete: Cascade)
+  aluno    Aluno    @relation(fields: [alunoId], references: [id])
+  catraca  Catraca? @relation(fields: [catracaId], references: [id])
 
   @@index([academiaId, criadoEm])
   @@index([alunoId, criadoEm])
@@ -254,12 +254,12 @@ model Pagamento {
   dataVencimento   DateTime
   dataPagamento    DateTime?
   descricao        String?
-  criadoEm        DateTime        @default(now())
-  atualizadoEm    DateTime        @updatedAt
+  criadoEm         DateTime        @default(now())
+  atualizadoEm     DateTime        @updatedAt
 
-  academia   Academia   @relation(fields: [academiaId], references: [id], onDelete: Cascade)
-  aluno      Aluno      @relation(fields: [alunoId], references: [id])
-  matricula  Matricula? @relation(fields: [matriculaId], references: [id])
+  academia  Academia   @relation(fields: [academiaId], references: [id], onDelete: Cascade)
+  aluno     Aluno      @relation(fields: [alunoId], references: [id])
+  matricula Matricula? @relation(fields: [matriculaId], references: [id])
 
   @@index([academiaId, status])
   @@index([academiaId, dataVencimento])
@@ -286,16 +286,16 @@ enum StatusPagamento {
 // ─── NOTIFICACOES LOG ─────────────────────────────────
 
 model NotificacaoLog {
-  id           String             @id @default(cuid())
+  id           String            @id @default(cuid())
   academiaId   String
   alunoId      String?
   canal        CanalNotificacao
   tipo         String
   destinatario String
   mensagem     String
-  status       StatusNotificacao  @default(ENVIADO)
+  status       StatusNotificacao @default(ENVIADO)
   erro         String?
-  criadoEm    DateTime           @default(now())
+  criadoEm     DateTime          @default(now())
 
   academia Academia @relation(fields: [academiaId], references: [id], onDelete: Cascade)
 
@@ -323,8 +323,8 @@ model FaceEmbedding {
   id           String   @id @default(cuid())
   alunoId      String   @unique
   academiaId   String
-  embedding    String   // JSON array de floats (vetor 512d)
-  criadoEm    DateTime @default(now())
+  embedding    String // JSON array de floats (vetor 512d)
+  criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
   aluno    Aluno    @relation(fields: [alunoId], references: [id], onDelete: Cascade)
@@ -335,11 +335,44 @@ model FaceEmbedding {
 }
 
 model WhatsappSession {
-  academiaId String
-  key        String
-  data       Json
+  academiaId   String
+  key          String
+  data         Json
   atualizadoEm DateTime @updatedAt
 
   @@id([academiaId, key])
   @@map("whatsapp_sessions")
+}
+
+// ─── AGENDAMENTOS (Leads de demonstração — fora do tenant) ─────────
+// Recebe solicitações públicas de /agendar e alimenta /admin/agendamentos.
+// NÃO tem academiaId — é lead, ainda não virou cliente.
+
+model Agendamento {
+  id               String            @id @default(cuid())
+  nome             String
+  telefone         String
+  email            String?
+  academiaNome     String
+  cidade           String
+  numAlunos        String // '0-50' | '50-200' | '200-500' | '500+'
+  horarioPreferido String
+  observacao       String?
+  status           StatusAgendamento @default(PENDENTE)
+  ipOrigem         String?
+  contatadoEm      DateTime?
+  convertidoEm     DateTime?
+  criadoEm         DateTime          @default(now())
+  atualizadoEm     DateTime          @updatedAt
+
+  @@index([status, criadoEm])
+  @@index([criadoEm])
+  @@map("agendamentos")
+}
+
+enum StatusAgendamento {
+  PENDENTE
+  CONTATADO
+  CONVERTIDO
+  PERDIDO
 }
