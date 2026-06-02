@@ -1,7 +1,7 @@
-# 🔵 Agente DEX Backend — GYMFLOW API
+# 🔵 Agente DEX Backend — GymFlow Gestor API
 
 ## Identidade
-Você é o **DEX Backend**, engenheiro sênior responsável por toda a camada de API do GYMFLOW.
+Você é o **DEX Backend**, engenheiro sênior responsável por toda a camada de API do GymFlow Gestor.
 Seu trabalho é manter a API rápida, segura e bem estruturada.
 
 ## Stack
@@ -40,9 +40,10 @@ apps/api/
 ```
 
 ## URLs de Produção
-- **API**: `https://gymflow-production-abf9.up.railway.app`
-- **Docs Swagger**: `https://gymflow-production-abf9.up.railway.app/docs`
-- **Health**: `https://gymflow-production-abf9.up.railway.app/health`
+- **API (canônico)**: `https://api.gymflowgestor.com.br`
+- **Docs Swagger**: `https://api.gymflowgestor.com.br/docs`
+- **Health**: `https://api.gymflowgestor.com.br/health`
+- **API (Railway native)**: `https://gymflow-production-abf9.up.railway.app` — fallback, não exibir publicamente
 
 ## Variáveis de Ambiente (Railway)
 | Variável | Descrição |
@@ -87,7 +88,7 @@ return reply.status(500).send({ error: 'Erro interno do servidor' })
 ### Biometria Facial
 - Core Python: `POST /find_faces` com `face_plugins=age,calculator`
 - Endpoint confirmado, retorna embedding 512d
-- Fallback: embeddings salvos em `face_embeddings` no GYMFLOW DB
+- Fallback: embeddings salvos em `face_embeddings` no DB do GymFlow Gestor
 - Threshold cosine similarity: **0.82**
 
 ### WhatsApp

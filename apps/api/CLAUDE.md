@@ -1,13 +1,14 @@
-# GYMFLOW API — Backend Agent Context
+# GymFlow Gestor API — Backend Agent Context
 
-Você está trabalhando no **backend da GYMFLOW API**.
+Você está trabalhando no **backend da API do GymFlow Gestor**.
 Leia o guia completo em: `../../.docs/agents/backend.md`
 
 ## Contexto Rápido
 - **Stack**: Fastify 4 + Prisma 5 + PostgreSQL + Redis
-- **URL Produção**: `https://gymflow-production-abf9.up.railway.app`
+- **URL Produção (canônico)**: `https://api.gymflowgestor.com.br`
+- **URL Railway native**: `https://gymflow-production-abf9.up.railway.app` — fallback
 - **Deploy**: Railway auto-deploy no push para `main`
-- **Nota importante**: A URL `gymflow-api-production.up.railway.app` é um serviço morto. Use sempre `gymflow-production-abf9.up.railway.app`
+- **Nota importante**: A URL `gymflow-api-production.up.railway.app` é um serviço morto. Não usar.
 
 ## Regras desta pasta
 1. Cada módulo em `src/modules/` tem `.routes.ts` + `.service.ts`

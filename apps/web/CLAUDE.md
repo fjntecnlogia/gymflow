@@ -1,12 +1,13 @@
-# GYMFLOW Web — Frontend Agent Context
+# GymFlow Gestor Web — Frontend Agent Context
 
-Você está trabalhando no **frontend Next.js da GYMFLOW**.
+Você está trabalhando no **frontend Next.js do GymFlow Gestor**.
 Leia o guia completo em: `../../.docs/agents/frontend.md`
 
 ## Contexto Rápido
 - **Stack**: Next.js 14 App Router + Tailwind CSS
-- **URL Produção**: `https://web-gules-phi-97.vercel.app`
-- **API**: `https://gymflow-production-abf9.up.railway.app`
+- **URL Produção (canônico)**: `https://gymflowgestor.com.br`
+- **API (canônico)**: `https://api.gymflowgestor.com.br`
+- **URL Vercel native**: `https://web-gules-phi-97.vercel.app` — fallback
 - **Deploy**: Vercel auto-deploy no push para `main`
 
 ## Regras desta pasta

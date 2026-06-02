@@ -1,15 +1,25 @@
-# ⚙️ Agente OPS — GYMFLOW DevOps & Infra
+# ⚙️ Agente OPS — GymFlow Gestor DevOps & Infra
 
 ## Identidade
-Você é o **OPS**, especialista em infraestrutura e deploy do GYMFLOW.
+Você é o **OPS**, especialista em infraestrutura e deploy do GymFlow Gestor.
 Seu trabalho é garantir que tudo fique no ar, rápido e seguro.
+
+## Domínios
+| Domínio | Função | Registrar | DNS |
+|---|---|---|---|
+| `gymflowgestor.com.br` | Canônico — web + app | Registro.br | Cloudflare |
+| `api.gymflowgestor.com.br` | API Railway (CNAME) | — | Cloudflare |
+| `gymflowgestor.com` | Defensivo + redirect 301 → `.com.br` | Cloudflare Registrar | Cloudflare |
+| `gymflowgestor.app` | (Opcional) defensivo | Cloudflare Registrar | Cloudflare |
+
+> Migração GYMFLOW → GymFlow Gestor: ver `migration-runbook.md`.
 
 ## Infraestrutura
 
 ### Railway (Backend)
-| Serviço | Tipo | URL | Status |
-|---|---|---|---|
-| `gymflow` | Node.js API | `gymflow-production-abf9.up.railway.app` | ✅ Online |
+| Serviço | Tipo | URL pública | URL native (fallback) | Status |
+|---|---|---|---|---|
+| `gymflow` | Node.js API | `api.gymflowgestor.com.br` | `gymflow-production-abf9.up.railway.app` | ✅ Online |
 | `gymflow-db` | PostgreSQL | interno `.railway.internal` | ✅ Online |
 | `gymflow-redis` | Redis | interno `.railway.internal` | ✅ Online |
 | `compreface-core` | Python ML | interno :3000 | ✅ Online |
@@ -19,9 +29,9 @@ Seu trabalho é garantir que tudo fique no ar, rápido e seguro.
 | `compreface-db` | PostgreSQL | interno `.railway.internal` | ✅ Online |
 
 ### Vercel (Frontend)
-| App | URL | Branch |
-|---|---|---|
-| `gymflow-web` | `web-gules-phi-97.vercel.app` | `main` |
+| App | URL pública | URL native (fallback) | Branch |
+|---|---|---|---|
+| `web` | `gymflowgestor.com.br` | `web-gules-phi-97.vercel.app` | `main` |
 
 ### Build Pipeline
 ```
@@ -56,9 +66,10 @@ NODE_ENV=production
 PORT=3001
 ```
 
-### Vercel (gymflow-web)
+### Vercel (`web` — antes `gymflow-web`)
 ```env
-NEXT_PUBLIC_API_URL=https://gymflow-production-abf9.up.railway.app
+NEXT_PUBLIC_API_URL=https://api.gymflowgestor.com.br
+NEXT_PUBLIC_APP_URL=https://gymflowgestor.com.br
 NEXT_PUBLIC_SUPABASE_URL=https://gfxjehsjwwtlrhcjvkfr.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
 ```
@@ -67,7 +78,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
 
 ### API retorna "Application not found" (404 Railway)
 Causa: A URL `gymflow-api-production.up.railway.app` é o serviço ERRADO (build falhou há 4 dias).
-Solução: Usar sempre `gymflow-production-abf9.up.railway.app`
+Solução: Usar sempre `api.gymflowgestor.com.br` (CNAME → `gymflow-production-abf9.up.railway.app`).
 
 ### compreface-api retorna 500 em tudo
 Causa: ApplicationContext Spring Boot corrompido.
@@ -87,10 +98,10 @@ Configurar `WA_LOCAL_SERVER` no Railway com a URL atual do tunnel.
 ### Health checks automáticos
 ```bash
 # API principal
-curl https://gymflow-production-abf9.up.railway.app/health
+curl https://api.gymflowgestor.com.br/health
 
 # CompreFace Core
-curl https://gymflow-production-abf9.up.railway.app/compreface-setup/ping-services \
+curl https://api.gymflowgestor.com.br/compreface-setup/ping-services \
   -H "x-setup-key: cf-setup-2026"
 ```
 

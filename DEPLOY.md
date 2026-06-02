@@ -1,4 +1,4 @@
-# GYMFLOW — Guia de Deploy Completo
+# GymFlow Gestor — Guia de Deploy Completo
 
 ## Pré-requisitos
 - Conta no [Railway](https://railway.app) (grátis para começar)
@@ -153,8 +153,8 @@ A partir daí, cada `git push main` faz deploy automático! 🚀
 
 | Serviço | URL |
 |---------|-----|
-| Landing Page | `https://gymflow.vercel.app` |
-| Dashboard | `https://gymflow.vercel.app/dashboard` |
-| API | `https://gymflow-api.railway.app` |
-| Docs API | `https://gymflow-api.railway.app/docs` |
-| Health | `https://gymflow-api.railway.app/health` |
+| Landing Page | `https://gymflowgestor.com.br` |
+| Dashboard | `https://gymflowgestor.com.br/dashboard` |
+| API | `https://api.gymflowgestor.com.br` |
+| Docs API | `https://api.gymflowgestor.com.br/docs` |
+| Health | `https://api.gymflowgestor.com.br/health` |
