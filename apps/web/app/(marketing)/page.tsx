@@ -239,7 +239,7 @@ export default function LandingPage() {
         </div>
         <div className="flex items-center gap-3">
           <Link href="/login" className="text-sm text-muted hover:text-white transition-colors">Entrar</Link>
-          <Link href="/cadastro" className="gradient-btn text-dark font-bold text-sm px-4 py-2 rounded-lg">
+          <Link href="/planos-saas" className="gradient-btn text-dark font-bold text-sm px-4 py-2 rounded-lg">
             Testar grátis
           </Link>
         </div>
@@ -260,7 +260,7 @@ export default function LandingPage() {
           O GymFlow Gestor automatiza o controle de acesso, as cobranças e os alunos — para você parar de apagar incêndio e começar a crescer.
         </p>
         <div className="flex items-center justify-center gap-3 flex-wrap">
-          <Link href="/cadastro" className="gradient-btn text-dark font-bold text-base px-8 py-4 rounded-xl inline-flex items-center gap-2">
+          <Link href="/planos-saas" className="gradient-btn text-dark font-bold text-base px-8 py-4 rounded-xl inline-flex items-center gap-2">
             Testar grátis por 14 dias <ArrowRight size={18} />
           </Link>
           <a href="#demo" className="border border-dark-border text-white text-base px-8 py-4 rounded-xl hover:border-muted transition-colors">
@@ -513,7 +513,7 @@ export default function LandingPage() {
                 ))}
               </ul>
               <Link
-                href="/cadastro"
+                href="/planos-saas"
                 className={`w-full block text-center py-3 rounded-xl font-bold text-sm ${
                   p.featured
                     ? 'gradient-btn text-dark'
@@ -562,7 +562,7 @@ export default function LandingPage() {
             <span className="text-white"> devolvemos 100% do que você pagou.</span>
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap mb-6">
-            <Link href="/cadastro" className="gradient-btn text-dark font-bold text-base px-8 py-4 rounded-xl inline-flex items-center gap-2">
+            <Link href="/planos-saas" className="gradient-btn text-dark font-bold text-base px-8 py-4 rounded-xl inline-flex items-center gap-2">
               Começar agora — é grátis <ArrowRight size={18} />
             </Link>
             <a
@@ -607,7 +607,7 @@ export default function LandingPage() {
               <div className="text-xs font-bold uppercase tracking-widest text-white mb-3">Empresa</div>
               <ul className="space-y-2 text-sm text-muted">
                 <li><Link href="/login" className="hover:text-white transition-colors">Entrar</Link></li>
-                <li><Link href="/cadastro" className="hover:text-white transition-colors">Criar conta</Link></li>
+                <li><Link href="/planos-saas" className="hover:text-white transition-colors">Criar conta</Link></li>
                 <li><a href="#" className="hover:text-white transition-colors">Termos de uso</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Privacidade</a></li>
               </ul>
