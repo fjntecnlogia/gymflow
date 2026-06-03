@@ -56,12 +56,23 @@ enum StatusAcademia {
 model Usuario {
   id           String      @id @default(cuid())
   academiaId   String
-  supabaseId   String      @unique
+  // Nullable pra retro-compat com cadastros antigos via Supabase Auth.
+  // Novos usuários usam auth próprio (senhaHash + JWT do backend Fastify).
+  supabaseId   String?     @unique
   nome         String
   email        String
   telefone     String?
   role         RoleUsuario @default(STAFF)
   ativo        Boolean     @default(true)
+
+  // ─── Auth próprio (Postgres + bcrypt + JWT) ────────────────────
+  senhaHash                 String?
+  tokenPrimeiroAcesso       String?   @unique
+  tokenPrimeiroAcessoExpira DateTime?
+  tokenResetSenha           String?   @unique
+  tokenResetSenhaExpira     DateTime?
+  ultimoLoginEm             DateTime?
+
   criadoEm     DateTime    @default(now())
   atualizadoEm DateTime    @updatedAt
 

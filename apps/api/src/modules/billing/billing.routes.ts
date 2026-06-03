@@ -9,10 +9,10 @@ import {
   obterMRR,
   PLANO_VALORES,
 } from '../../integrations/stripe'
-import { convidarUsuarioPorEmail } from '../../lib/supabase'
+import { gerarTokenPrimeiroAcesso } from '../auth/auth.service'
 import {
   enviarEmail,
-  templateBoasVindasCompra,
+  templatePrimeiroAcesso,
   templateNovaVendaAdmin,
 } from '../../integrations/email'
 import { z } from 'zod'
@@ -129,23 +129,21 @@ export async function billingRoutes(app: FastifyInstance) {
               },
             })
 
-            // Convida o usuário no Supabase (cria user sem senha e envia magic link)
-            const supaUser = await convidarUsuarioPorEmail(email, `${WEB_URL}/login`, {
-              academiaId: academia.id,
-              role: 'OWNER',
-            })
-
-            // Cria Usuario interno linkado ao Supabase user
-            await prisma.usuario.create({
+            // Cria Usuario com supabaseId=null (auth próprio agora).
+            // Token de primeiro acesso é gerado abaixo e enviado por e-mail.
+            const usuario = await prisma.usuario.create({
               data: {
                 academiaId: academia.id,
-                supabaseId: supaUser.id,
+                supabaseId: null,
                 nome: nomeContato,
                 email,
                 role: 'OWNER',
                 ativo: true,
               },
             })
+
+            // Gera token único pra primeiro acesso (expira em 7 dias)
+            const tokenPrimeiroAcesso = await gerarTokenPrimeiroAcesso(usuario.id)
 
             // Atualiza Stripe customer com academiaId agora que existe
             // (usamos require dinâmico pra evitar import circular)
@@ -155,14 +153,15 @@ export async function billingRoutes(app: FastifyInstance) {
             }).catch((err: any) => console.error('[Billing] update customer meta:', err?.message))
 
             // E-mails fire-and-forget — não bloqueiam a resposta do webhook
+            const linkPrimeiroAcesso = `${WEB_URL}/criar-senha?token=${tokenPrimeiroAcesso}`
             enviarEmail({
               to: email,
               subject: '✅ Bem-vindo(a) ao GymFlow Gestor — crie sua senha',
-              html: templateBoasVindasCompra({
+              html: templatePrimeiroAcesso({
                 nomeContato,
                 nomeAcademia,
                 plano,
-                valor: PLANO_VALORES[plano],
+                link: linkPrimeiroAcesso,
               }),
             }).catch((e) => console.error('[Billing] email cliente:', e?.message))
 

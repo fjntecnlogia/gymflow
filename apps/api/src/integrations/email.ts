@@ -149,6 +149,97 @@ export function templateConfirmacaoCliente(nome: string, telefone: string): stri
 }
 
 /**
+ * Template: primeiro acesso pós-compra. Cliente recebe link único
+ * (expira em 7d) que leva pro /criar-senha?token=...
+ */
+export function templatePrimeiroAcesso(params: {
+  nomeContato: string
+  nomeAcademia: string
+  plano: string
+  link: string
+}): string {
+  const primeiro = params.nomeContato.split(' ')[0] || params.nomeContato
+  return wrap(
+    `
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:0 0 20px;">
+      <tr><td style="padding:14px 18px;background:#E6FFF1;border:1px solid #B8F5D2;border-radius:10px;font-size:13px;color:#0A6938;font-weight:600;">
+        ✅ Pagamento confirmado — sua academia está ativa!
+      </td></tr>
+    </table>
+    <p style="font-size:15px;margin:0 0 16px;">Olá, <strong>${primeiro}</strong>!</p>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">
+      Sua academia <strong>${params.nomeAcademia}</strong> foi criada com sucesso no
+      plano <strong>${params.plano}</strong>. Pra acessar o painel, clica no botão abaixo
+      e cria sua senha:
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:24px 0;">
+      <tr><td align="center">
+        <a href="${params.link}" style="display:inline-block;background:${COR_PRIMARY};color:#0B1340;padding:16px 32px;border-radius:12px;font-weight:800;text-decoration:none;font-size:15px;">
+          Criar senha e entrar →
+        </a>
+      </td></tr>
+    </table>
+    <p style="font-size:12px;color:${COR_MUTED};margin:0 0 20px;text-align:center;">
+      Esse link funciona uma vez só e expira em 7 dias.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:8px 0;">
+      <tr><td style="padding:14px 16px;background:#F5F7FA;border-left:3px solid ${COR_PRIMARY};border-radius:6px;font-size:12px;color:${COR_MUTED};line-height:1.6;">
+        Se o botão não funcionar, copia e cola este link no navegador:<br>
+        <span style="font-family:monospace;word-break:break-all;color:${COR_TEXT};">${params.link}</span>
+      </td></tr>
+    </table>
+    <p style="font-size:14px;color:${COR_MUTED};margin:24px 0 8px;">Qualquer dúvida, chama no WhatsApp:</p>
+    <p style="margin:0 0 24px;">
+      <a href="https://wa.me/5565996952828" style="color:${COR_PRIMARY};font-weight:600;text-decoration:none;">
+        WhatsApp (65) 99695-2828
+      </a>
+    </p>
+    <p style="font-size:12px;color:${COR_MUTED};margin:0;">
+      Obrigado pela confiança,<br>
+      <strong>Equipe GymFlow Gestor · FJN Tecnologia</strong>
+    </p>
+  `,
+    `Sua academia está ativa — clica no link pra criar sua senha.`,
+  )
+}
+
+/**
+ * Template: reset de senha. Link expira em 2 horas.
+ */
+export function templateResetSenha(nome: string, link: string): string {
+  const primeiro = nome.split(' ')[0] || nome
+  return wrap(
+    `
+    <p style="font-size:15px;margin:0 0 16px;">Olá, <strong>${primeiro}</strong>!</p>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">
+      Você (ou alguém) solicitou redefinição de senha do GymFlow Gestor.
+      Pra criar uma nova senha, clica no botão abaixo:
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:24px 0;">
+      <tr><td align="center">
+        <a href="${link}" style="display:inline-block;background:${COR_PRIMARY};color:#0B1340;padding:14px 28px;border-radius:12px;font-weight:800;text-decoration:none;font-size:15px;">
+          Redefinir senha →
+        </a>
+      </td></tr>
+    </table>
+    <p style="font-size:12px;color:${COR_MUTED};margin:0 0 24px;text-align:center;">
+      Esse link expira em 2 horas. Se você não solicitou, pode ignorar este e-mail.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+      <tr><td style="padding:14px 16px;background:#F5F7FA;border-left:3px solid ${COR_PRIMARY};border-radius:6px;font-size:12px;color:${COR_MUTED};line-height:1.6;">
+        Se o botão não funcionar:<br>
+        <span style="font-family:monospace;word-break:break-all;color:${COR_TEXT};">${link}</span>
+      </td></tr>
+    </table>
+    <p style="font-size:12px;color:${COR_MUTED};margin:24px 0 0;">
+      <strong>Equipe GymFlow Gestor</strong>
+    </p>
+  `,
+    `Link pra redefinir sua senha (expira em 2h).`,
+  )
+}
+
+/**
  * Template: boas-vindas ao cliente que acabou de comprar uma assinatura.
  * Inclui CTA pra setar a senha (magic link já foi enviado pelo Supabase
  * em e-mail separado — esse aqui é o "obrigado pela compra" oficial).
