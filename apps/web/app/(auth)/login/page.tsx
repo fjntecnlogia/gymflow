@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Mail, Lock } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { api } from '@/lib/api'
 
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
+  const [mostrarSenha, setMostrarSenha] = useState(false)
   const [loading, setLoading] = useState(false)
 
   async function handleLogin(e: React.FormEvent) {
@@ -68,11 +69,22 @@ export default function LoginPage() {
           <div>
             <Input
               label="Senha"
-              type="password"
+              type={mostrarSenha ? 'text' : 'password'}
               placeholder="••••••••"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               leftIcon={<Lock size={14} />}
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={() => setMostrarSenha((v) => !v)}
+                  tabIndex={-1}
+                  aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                  className="hover:text-white transition-colors"
+                >
+                  {mostrarSenha ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              }
               required
             />
             <Link

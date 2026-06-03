@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Lock, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react'
+import { Lock, CheckCircle2, AlertTriangle, Loader2, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { api } from '@/lib/api'
 
@@ -16,8 +16,21 @@ function Conteudo() {
 
   const [senha, setSenha] = useState('')
   const [confirmar, setConfirmar] = useState('')
+  const [mostrarSenha, setMostrarSenha] = useState(false)
   const [loading, setLoading] = useState(false)
   const [sucesso, setSucesso] = useState(false)
+
+  const olhoIcon = (
+    <button
+      type="button"
+      onClick={() => setMostrarSenha((v) => !v)}
+      tabIndex={-1}
+      aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+      className="hover:text-white transition-colors"
+    >
+      {mostrarSenha ? <EyeOff size={14} /> : <Eye size={14} />}
+    </button>
+  )
 
   if (!token) {
     return (
@@ -86,17 +99,18 @@ function Conteudo() {
       <form onSubmit={handleSubmit} className="card p-6 space-y-4">
         <Input
           label="Nova senha"
-          type="password"
+          type={mostrarSenha ? 'text' : 'password'}
           placeholder="Mínimo 8 caracteres"
           value={senha}
           onChange={(e) => setSenha(e.target.value)}
           leftIcon={<Lock size={14} />}
+          rightIcon={olhoIcon}
           required
           minLength={8}
         />
         <Input
           label="Confirmar senha"
-          type="password"
+          type={mostrarSenha ? 'text' : 'password'}
           placeholder="Repita a senha"
           value={confirmar}
           onChange={(e) => setConfirmar(e.target.value)}
