@@ -92,7 +92,7 @@ export async function donoMiddleware(req: FastifyRequest, reply: FastifyReply) {
   await authMiddleware(req, reply)
   if (reply.sent) return
   const role = (req as any).role
-  if (!['SUPER_ADMIN', 'DONO', 'OWNER', 'GERENTE'].includes(role)) {
+  if (!['SUPER_ADMIN', 'DONO', 'GERENTE'].includes(role)) {
     return reply.status(403).send({ error: 'Acesso negado' })
   }
 }

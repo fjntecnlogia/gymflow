@@ -113,33 +113,33 @@ export async function billingRoutes(app: FastifyInstance) {
           const nomeContato = (data.metadata.nomeContato ?? email) as string
 
           try {
-            // Cria Academia ATIVA
-            const academia = await prisma.academia.create({
-              data: {
-                nome: nomeAcademia,
-                email,
-                slug: gerarSlug(nomeAcademia),
-                planoSaas: plano,
-                status: 'ATIVO',
-                configuracoes: {
-                  stripeCustomerId: data.customer,
-                  stripeSubscriptionId: data.subscription,
-                  source: 'public_signup',
+            // Transação: se Usuario falhar, Academia é revertida (sem órfãs)
+            const { academia, usuario } = await prisma.$transaction(async (tx) => {
+              const academia = await tx.academia.create({
+                data: {
+                  nome: nomeAcademia,
+                  email,
+                  slug: gerarSlug(nomeAcademia),
+                  planoSaas: plano,
+                  status: 'ATIVO',
+                  configuracoes: {
+                    stripeCustomerId: data.customer,
+                    stripeSubscriptionId: data.subscription,
+                    source: 'public_signup',
+                  },
                 },
-              },
-            })
-
-            // Cria Usuario com supabaseId=null (auth próprio agora).
-            // Token de primeiro acesso é gerado abaixo e enviado por e-mail.
-            const usuario = await prisma.usuario.create({
-              data: {
-                academiaId: academia.id,
-                supabaseId: null,
-                nome: nomeContato,
-                email,
-                role: 'OWNER',
-                ativo: true,
-              },
+              })
+              const usuario = await tx.usuario.create({
+                data: {
+                  academiaId: academia.id,
+                  supabaseId: null,
+                  nome: nomeContato,
+                  email,
+                  role: 'DONO',
+                  ativo: true,
+                },
+              })
+              return { academia, usuario }
             })
 
             // Gera token único pra primeiro acesso (expira em 7 dias)
@@ -224,42 +224,54 @@ export async function billingRoutes(app: FastifyInstance) {
       nomeContato: z.string().trim().min(2).max(120),
     }).parse(req.body)
 
-    // Bloqueia se já existe
-    const existente = await prisma.academia.findUnique({ where: { email: body.email } })
+    // Se existe academia ÓRFÃ (sem usuário, source=simulated_signup), deleta antes.
+    // Útil pra retry depois de teste anterior falhar.
+    const existente = await prisma.academia.findUnique({
+      where: { email: body.email },
+      include: { usuarios: { select: { id: true } } },
+    })
     if (existente) {
-      return reply.status(409).send({
-        error: 'Já existe academia com esse e-mail. Use outro pra simular.',
-        academiaExistente: { id: existente.id, slug: existente.slug, status: existente.status },
-      })
+      const cfg = existente.configuracoes as any
+      const orfã = existente.usuarios.length === 0 && cfg?.source?.includes('simulated')
+      if (orfã) {
+        await prisma.academia.delete({ where: { id: existente.id } })
+        console.log(`[SIM] academia órfã deletada (retry): ${existente.id}`)
+      } else {
+        return reply.status(409).send({
+          error: 'Já existe academia ativa com esse e-mail. Use outro pra simular.',
+          academiaExistente: { id: existente.id, slug: existente.slug, status: existente.status },
+        })
+      }
     }
 
     try {
-      // Cria Academia (igual webhook)
-      const academia = await prisma.academia.create({
-        data: {
-          nome: body.nomeAcademia,
-          email: body.email,
-          slug: gerarSlug(body.nomeAcademia),
-          planoSaas: body.plano,
-          status: 'ATIVO',
-          configuracoes: {
-            stripeCustomerId: 'TEST_SIMULATED',
-            stripeSubscriptionId: 'TEST_SIMULATED',
-            source: 'simulated_signup',
+      // Transação atômica — se Usuario falhar, Academia é revertida.
+      const { academia, usuario } = await prisma.$transaction(async (tx) => {
+        const academia = await tx.academia.create({
+          data: {
+            nome: body.nomeAcademia,
+            email: body.email,
+            slug: gerarSlug(body.nomeAcademia),
+            planoSaas: body.plano,
+            status: 'ATIVO',
+            configuracoes: {
+              stripeCustomerId: 'TEST_SIMULATED',
+              stripeSubscriptionId: 'TEST_SIMULATED',
+              source: 'simulated_signup',
+            },
           },
-        },
-      })
-
-      // Cria Usuario sem supabaseId
-      const usuario = await prisma.usuario.create({
-        data: {
-          academiaId: academia.id,
-          supabaseId: null,
-          nome: body.nomeContato,
-          email: body.email,
-          role: 'OWNER',
-          ativo: true,
-        },
+        })
+        const usuario = await tx.usuario.create({
+          data: {
+            academiaId: academia.id,
+            supabaseId: null,
+            nome: body.nomeContato,
+            email: body.email,
+            role: 'DONO',
+            ativo: true,
+          },
+        })
+        return { academia, usuario }
       })
 
       // Gera token primeiro acesso
