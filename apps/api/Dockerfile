@@ -45,3 +45,4 @@ EXPOSE 3001
 # --accept-data-loss é seguro: schema é gerenciado pelo Prisma e mudanças
 # são aditivas (novas tabelas/colunas, nada destrutivo).
 CMD ["sh", "-c", "npx prisma db push --accept-data-loss && npx tsx src/server.ts"]
+# trigger redeploy Tue Jun  2 20:30:48 HPBC 2026
