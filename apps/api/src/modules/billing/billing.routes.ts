@@ -207,6 +207,111 @@ export async function billingRoutes(app: FastifyInstance) {
     return reply.status(200).send({ received: true })
   })
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // ENDPOINT DE TESTE — simula uma compra sem passar pelo Stripe.
+  // Executa exatamente a mesma lógica do webhook checkout.session.completed
+  // (cria academia + usuário + token primeiro acesso + dispara emails).
+  // Protegido por X-Test-Key — REMOVER em produção real depois de validar.
+  // ──────────────────────────────────────────────────────────────────────────
+  app.post('/simular-compra', async (req, reply) => {
+    if (req.headers['x-test-key'] !== 'gymflow-test-2026') {
+      return reply.status(403).send({ error: 'forbidden' })
+    }
+    const body = z.object({
+      plano: z.enum(['STARTER', 'PRO', 'ENTERPRISE']).default('STARTER'),
+      email: z.string().trim().toLowerCase().email('E-mail inválido'),
+      nomeAcademia: z.string().trim().min(2).max(120),
+      nomeContato: z.string().trim().min(2).max(120),
+    }).parse(req.body)
+
+    // Bloqueia se já existe
+    const existente = await prisma.academia.findUnique({ where: { email: body.email } })
+    if (existente) {
+      return reply.status(409).send({
+        error: 'Já existe academia com esse e-mail. Use outro pra simular.',
+        academiaExistente: { id: existente.id, slug: existente.slug, status: existente.status },
+      })
+    }
+
+    try {
+      // Cria Academia (igual webhook)
+      const academia = await prisma.academia.create({
+        data: {
+          nome: body.nomeAcademia,
+          email: body.email,
+          slug: gerarSlug(body.nomeAcademia),
+          planoSaas: body.plano,
+          status: 'ATIVO',
+          configuracoes: {
+            stripeCustomerId: 'TEST_SIMULATED',
+            stripeSubscriptionId: 'TEST_SIMULATED',
+            source: 'simulated_signup',
+          },
+        },
+      })
+
+      // Cria Usuario sem supabaseId
+      const usuario = await prisma.usuario.create({
+        data: {
+          academiaId: academia.id,
+          supabaseId: null,
+          nome: body.nomeContato,
+          email: body.email,
+          role: 'OWNER',
+          ativo: true,
+        },
+      })
+
+      // Gera token primeiro acesso
+      const tokenPrimeiroAcesso = await gerarTokenPrimeiroAcesso(usuario.id)
+      const linkPrimeiroAcesso = `${WEB_URL}/criar-senha?token=${tokenPrimeiroAcesso}`
+
+      // E-mails fire-and-forget (mesma lógica do webhook)
+      const planoUpper = body.plano
+      enviarEmail({
+        to: body.email,
+        subject: '✅ Bem-vindo(a) ao GymFlow Gestor — crie sua senha',
+        html: templatePrimeiroAcesso({
+          nomeContato: body.nomeContato,
+          nomeAcademia: body.nomeAcademia,
+          plano: planoUpper,
+          link: linkPrimeiroAcesso,
+        }),
+      }).catch((e) => console.error('[SIM] email cliente:', e?.message))
+
+      enviarEmail({
+        to: ADMIN_LEAD_EMAIL,
+        subject: `💰 [SIMULADA] Nova venda: ${body.nomeAcademia} (${planoUpper})`,
+        html: templateNovaVendaAdmin({
+          nomeContato: body.nomeContato,
+          nomeAcademia: body.nomeAcademia,
+          email: body.email,
+          plano: planoUpper,
+          valor: PLANO_VALORES[planoUpper],
+          stripeSessionId: 'simulada',
+        }),
+        replyTo: body.email,
+      }).catch((e) => console.error('[SIM] email admin:', e?.message))
+
+      console.log(`[SIM] compra simulada OK: academia=${academia.id} email=${body.email}`)
+
+      return reply.status(201).send({
+        ok: true,
+        academiaId: academia.id,
+        usuarioId: usuario.id,
+        slug: academia.slug,
+        linkPrimeiroAcesso,
+        message: 'Academia criada. Confere seu e-mail OU usa o link diretamente.',
+      })
+    } catch (err: any) {
+      console.error('[SIM] falha:', err?.message, err?.stack?.slice(0, 300))
+      return reply.status(500).send({
+        error: err?.message ?? 'erro inesperado',
+        stack: err?.stack?.slice(0, 300),
+      })
+    }
+  })
+
   // ─── Checkout PÚBLICO (sem auth) ─────────────────────────────────────────
   //
   // Usado por cliente novo em /planos-saas que decidiu comprar sem demo.
