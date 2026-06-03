@@ -17,18 +17,19 @@ Seu trabalho é manter a API rápida, segura e bem estruturada.
 apps/api/
 ├── src/
 │   ├── modules/          ← cada módulo tem .routes.ts + .service.ts + .schema.ts
-│   │   ├── auth/
-│   │   ├── alunos/
-│   │   ├── academias/
-│   │   ├── planos/
-│   │   ├── pagamentos/
-│   │   ├── acesso/
-│   │   ├── catracas/
-│   │   ├── biometria/    ← CompreFace Core (facial recognition)
-│   │   ├── dashboard/
-│   │   ├── notificacoes/
-│   │   ├── billing/
-│   │   └── admin/
+│   │   ├── academias/    ← CRUD da academia (tenant raiz)
+│   │   ├── acesso/       ← controle de entrada (QR Code, biometria)
+│   │   ├── admin/        ← painel super admin SaaS
+│   │   ├── agendamentos/ ← leads de demo pública (/agendar) ← NOVO
+│   │   ├── alunos/       ← cadastro, perfil, QR Code
+│   │   ├── auth/         ← login, registro, refresh token
+│   │   ├── billing/      ← SaaS billing, planos
+│   │   ├── biometria/    ← facial recognition (CompreFace Core)
+│   │   ├── catracas/     ← integração hardware catraca
+│   │   ├── dashboard/    ← KPIs e estatísticas
+│   │   ├── notificacoes/ ← WhatsApp, push
+│   │   ├── pagamentos/   ← registros de pagamento
+│   │   └── planos/       ← planos de mensalidade
 │   ├── integrations/     ← WhatsApp Baileys, CompreFace
 │   ├── jobs/             ← BullMQ workers
 │   ├── lib/              ← prisma.ts, redis.ts
@@ -82,6 +83,23 @@ return reply.status(404).send({ error: 'Recurso não encontrado' })
 return reply.status(400).send({ error: 'Dados inválidos', details: [...] })
 return reply.status(500).send({ error: 'Erro interno do servidor' })
 ```
+
+## Módulos e Responsabilidades (atualizado)
+| Módulo | Descrição | Auth |
+|---|---|---|
+| `academias` | CRUD academia, configurações | ✅ |
+| `acesso` | Entrada por QR Code e biometria | ✅ |
+| `admin` | Painel super admin da plataforma | ✅ ADMIN |
+| `agendamentos` | Leads de demo — `POST /agendamentos` público | Público (rate-limit 1/5min) |
+| `alunos` | Cadastro, perfil, QR Code | ✅ |
+| `auth` | Login, registro, refresh | Público |
+| `billing` | SaaS billing, webhooks Stripe | ✅ |
+| `biometria` | Facial recognition, embeddings | ✅ |
+| `catracas` | Integração hardware | ✅ |
+| `dashboard` | KPIs e estatísticas | ✅ |
+| `notificacoes` | WhatsApp, histórico | ✅ |
+| `pagamentos` | Registros de pagamento | ✅ |
+| `planos` | Planos de mensalidade | ✅ |
 
 ## Integrações Críticas
 

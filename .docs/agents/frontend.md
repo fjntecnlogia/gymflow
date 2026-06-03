@@ -129,18 +129,48 @@ await api.patch(`/alunos/${id}`, { status: 'INADIMPLENTE' })
 await api.delete(`/alunos/${id}`)
 ```
 
-## Páginas Importantes
+## Páginas Existentes (atualizado)
 
+### Dashboard (academia logada) — `(dashboard)/`
 | Rota | Função |
 |---|---|
 | `/dashboard` | KPIs da academia |
 | `/alunos` | Lista + cadastro de alunos |
 | `/alunos/[id]` | Perfil completo + QR + biometria + frequência |
 | `/acesso` | Controle de entrada em tempo real |
+| `/agenda` | Agenda de aulas/turmas |
 | `/biometria` | Terminal biométrico (staff interno) |
-| `/acesso/[slug]/biometria` | Terminal kiosk público (catraca) |
-| `/financeiro` | Pagamentos, relatório |
-| `/admin` | Painel super admin SaaS |
+| `/catracas` | Gestão de catracas |
+| `/configuracoes` | Configurações da academia |
+| `/financeiro` | Pagamentos, relatório financeiro |
+| `/notificacoes` | Notificações WhatsApp |
+| `/planos` | Planos de mensalidade |
+| `/relatorios` | Relatórios e analytics |
+
+### Admin SaaS — `(admin)/admin/`
+| Rota | Função |
+|---|---|
+| `/admin` | Painel super admin (MRR, academias) |
+| `/admin/academias` | Gestão de academias |
+| `/admin/agendamentos` | Leads de demo ← NOVO |
+| `/admin/receita` | MRR e receita |
+| `/admin/planos` | Planos SaaS |
+| `/admin/suporte` | Suporte |
+| `/admin/sistema` | Status do sistema |
+
+### Marketing (público) — `(marketing)/`
+| Rota | Função |
+|---|---|
+| `/` | Landing page principal |
+| `/agendar` | Formulário de agendamento de demo ← lead capture |
+| `/planos-saas` | Página de planos |
+| `/assinatura-sucesso` | Pós-assinatura |
+| `/pagamento-sucesso` | Pós-pagamento |
+
+### Terminais Públicos (sem auth)
+| Rota | Função |
+|---|---|
+| `/acesso/[slug]/biometria` | Terminal kiosk biométrico para catraca |
 
 ## Checklist antes de commitar
 - [ ] Funciona sem erros no browser
