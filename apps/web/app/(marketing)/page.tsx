@@ -643,11 +643,10 @@ export default function LandingPage() {
               <span className="text-muted/30">·</span>
               <Link
                 href="/admin"
-                className="text-muted/40 hover:text-muted transition-colors"
-                aria-label="Painel administrativo"
-                title="Painel administrativo"
+                className="text-[10px] text-muted/50 hover:text-muted transition-colors uppercase tracking-wider"
+                title="Painel administrativo SaaS"
               >
-                ·
+                Acesso adm SaaS
               </Link>
             </span>
           </div>
