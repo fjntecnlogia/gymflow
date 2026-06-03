@@ -14,7 +14,7 @@ import {
 } from './agendamentos.schema'
 
 const ADMIN_WHATSAPP = process.env.ADMIN_LEAD_WHATSAPP ?? '5565996952828'
-const ADMIN_EMAIL = process.env.ADMIN_LEAD_EMAIL ?? 'fjntecnologia2022@gmail.com'
+const ADMIN_EMAIL = process.env.ADMIN_LEAD_EMAIL ?? 'contato@gymflowgestor.com.br'
 
 const FAIXA_ALUNOS_LABEL: Record<string, string> = {
   '0-50': 'Até 50',

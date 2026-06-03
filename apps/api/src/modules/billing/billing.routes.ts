@@ -18,7 +18,7 @@ import {
 import { z } from 'zod'
 
 const WEB_URL = process.env.WEB_URL ?? 'https://web-gules-phi-97.vercel.app'
-const ADMIN_LEAD_EMAIL = process.env.ADMIN_LEAD_EMAIL ?? 'fjntecnologia2022@gmail.com'
+const ADMIN_LEAD_EMAIL = process.env.ADMIN_LEAD_EMAIL ?? 'contato@gymflowgestor.com.br'
 
 /**
  * Gera um slug único pra academia a partir do nome.
