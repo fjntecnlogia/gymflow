@@ -254,11 +254,11 @@ export async function billingRoutes(app: FastifyInstance) {
     return { url: checkout.url, sessionId: checkout.sessionId }
   })
 
-  // ─── Rotas protegidas ────────────────────────────────────────────────────
-  app.addHook('onRequest', authMiddleware)
+  // ─── Rotas protegidas (preHandler por rota — não usar addHook global aqui,
+  //     porque ele se aplicaria também a /webhook e /checkout-publico) ────────
 
   // Criar checkout de assinatura
-  app.post('/checkout', async (req, reply) => {
+  app.post('/checkout', { preHandler: authMiddleware }, async (req, reply) => {
     const academiaId = (req as any).academiaId
     const { plano } = z.object({ plano: z.enum(['STARTER', 'PRO', 'ENTERPRISE']) }).parse(req.body)
 
@@ -278,7 +278,7 @@ export async function billingRoutes(app: FastifyInstance) {
   })
 
   // Portal de gerenciamento da assinatura
-  app.get('/portal', async (req, reply) => {
+  app.get('/portal', { preHandler: authMiddleware }, async (req, reply) => {
     const academiaId = (req as any).academiaId
     const academia = await prisma.academia.findUnique({ where: { id: academiaId } })
     const cfg = academia?.configuracoes as any
@@ -293,7 +293,7 @@ export async function billingRoutes(app: FastifyInstance) {
   })
 
   // Status da assinatura atual
-  app.get('/status', async (req) => {
+  app.get('/status', { preHandler: authMiddleware }, async (req) => {
     const academiaId = (req as any).academiaId
     const academia = await prisma.academia.findUnique({ where: { id: academiaId } })
     const cfg = academia?.configuracoes as any
@@ -308,7 +308,7 @@ export async function billingRoutes(app: FastifyInstance) {
   })
 
   // MRR para admin SaaS
-  app.get('/mrr', async (req, reply) => {
+  app.get('/mrr', { preHandler: authMiddleware }, async (req, reply) => {
     const role = (req as any).role
     if (role !== 'SUPER_ADMIN') return reply.status(403).send({ error: 'Apenas admins' })
     return obterMRR()
