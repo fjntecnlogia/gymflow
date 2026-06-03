@@ -638,7 +638,18 @@ export default function LandingPage() {
           </div>
           <div className="border-t border-dark-border pt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-muted">
             <span>© 2026 GymFlow Gestor · gymflowgestor.com.br · Sua academia. Sob controle.</span>
-            <span>Feito por <span className="text-white font-semibold">FJN Tecnologia</span></span>
+            <span className="flex items-center gap-2">
+              Feito por <span className="text-white font-semibold">FJN Tecnologia</span>
+              <span className="text-muted/30">·</span>
+              <Link
+                href="/admin"
+                className="text-muted/40 hover:text-muted transition-colors"
+                aria-label="Painel administrativo"
+                title="Painel administrativo"
+              >
+                ·
+              </Link>
+            </span>
           </div>
         </div>
       </footer>
