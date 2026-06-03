@@ -149,6 +149,93 @@ export function templateConfirmacaoCliente(nome: string, telefone: string): stri
 }
 
 /**
+ * Template: boas-vindas ao cliente que acabou de comprar uma assinatura.
+ * Inclui CTA pra setar a senha (magic link já foi enviado pelo Supabase
+ * em e-mail separado — esse aqui é o "obrigado pela compra" oficial).
+ */
+export function templateBoasVindasCompra(params: {
+  nomeContato: string
+  nomeAcademia: string
+  plano: string
+  valor: number
+}): string {
+  const primeiro = params.nomeContato.split(' ')[0] || params.nomeContato
+  return wrap(
+    `
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:0 0 20px;">
+      <tr><td style="padding:14px 18px;background:#E6FFF1;border:1px solid #B8F5D2;border-radius:10px;font-size:13px;color:#0A6938;font-weight:600;">
+        ✅ Pagamento confirmado — bem-vindo(a) ao GymFlow Gestor!
+      </td></tr>
+    </table>
+    <p style="font-size:15px;margin:0 0 16px;">Olá, <strong>${primeiro}</strong>!</p>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
+      Sua academia <strong>${params.nomeAcademia}</strong> está ativa no
+      plano <strong>${params.plano}</strong> (R$ ${params.valor},00/mês).
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:24px 0;">
+      <tr>
+        <td style="padding:20px;background:#F0FCFF;border:1px solid #B8F0FF;border-radius:12px;">
+          <strong style="display:block;font-size:14px;color:${COR_TEXT};margin-bottom:12px;">📩 Próximo passo:</strong>
+          <p style="font-size:14px;color:${COR_MUTED};line-height:1.7;margin:0 0 10px;">
+            Você vai receber em instantes um <strong>segundo e-mail</strong> com o link
+            pra criar sua senha e acessar o painel.
+          </p>
+          <p style="font-size:13px;color:${COR_MUTED};margin:0;">
+            (Se não encontrar, confere o spam — remetente <em>noreply@mail.app.supabase.io</em>.)
+          </p>
+        </td>
+      </tr>
+    </table>
+    <p style="font-size:14px;color:${COR_MUTED};margin:0 0 8px;">Qualquer dúvida, é só responder este e-mail ou chamar no WhatsApp:</p>
+    <p style="margin:0 0 24px;">
+      <a href="https://wa.me/5565996952828" style="display:inline-block;background:${COR_PRIMARY};color:#0B1340;padding:12px 24px;border-radius:10px;font-weight:700;text-decoration:none;font-size:14px;">
+        Falar com a gente no WhatsApp →
+      </a>
+    </p>
+    <p style="font-size:12px;color:${COR_MUTED};margin:0;">
+      Obrigado pela confiança,<br>
+      <strong>Equipe GymFlow Gestor · FJN Tecnologia</strong>
+    </p>
+  `,
+    `Sua academia está ativa! Crie sua senha pra entrar.`,
+  )
+}
+
+/**
+ * Template: alerta interno ao admin de nova venda fechada (compra direta, sem demo).
+ */
+export function templateNovaVendaAdmin(params: {
+  nomeContato: string
+  nomeAcademia: string
+  email: string
+  plano: string
+  valor: number
+  stripeSessionId?: string
+}): string {
+  return wrap(
+    `
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:0 0 16px;">
+      <tr><td style="padding:12px 16px;background:#E6FFF1;border:1px solid #B8F5D2;border-radius:10px;font-size:13px;color:#0A6938;font-weight:600;">
+        💰 NOVA VENDA — ${params.plano} · R$ ${params.valor},00/mês
+      </td></tr>
+    </table>
+    <h2 style="font-size:20px;margin:0 0 4px;font-weight:700;">${params.nomeAcademia}</h2>
+    <p style="font-size:14px;color:${COR_MUTED};margin:0 0 24px;">Contato: ${params.nomeContato}</p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="font-size:14px;">
+      <tr><td style="padding:8px 0;color:${COR_MUTED};width:38%;">📧 E-mail</td><td style="padding:8px 0;"><a href="mailto:${params.email}" style="color:${COR_TEXT};">${params.email}</a></td></tr>
+      <tr><td style="padding:8px 0;color:${COR_MUTED};">💎 Plano</td><td style="padding:8px 0;font-weight:600;">${params.plano}</td></tr>
+      <tr><td style="padding:8px 0;color:${COR_MUTED};">💵 MRR</td><td style="padding:8px 0;font-weight:600;">+R$ ${params.valor},00</td></tr>
+      ${params.stripeSessionId ? `<tr><td style="padding:8px 0;color:${COR_MUTED};">🔗 Stripe</td><td style="padding:8px 0;font-family:monospace;font-size:12px;">${params.stripeSessionId}</td></tr>` : ''}
+    </table>
+    <p style="font-size:12px;color:${COR_MUTED};margin:24px 0 0;">
+      Conta criada automaticamente. Cliente recebeu e-mail com convite pra setar senha.
+    </p>
+  `,
+    `Nova venda: ${params.nomeAcademia} (${params.plano})`,
+  )
+}
+
+/**
  * Template: alerta interno ao admin de novo lead recebido.
  */
 export function templateLeadAdmin(dados: {

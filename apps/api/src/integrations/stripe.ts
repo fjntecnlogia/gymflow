@@ -35,7 +35,8 @@ export async function criarCheckoutAssinatura(params: {
     metadata: { academiaId: params.academiaId, plano: params.plano },
   })
 
-  // Criar sessão de checkout para assinatura recorrente
+  // Criar sessão de checkout para assinatura recorrente.
+  // SEM trial — estratégia atual é "compra direta ou demo", nada grátis.
   const session = await stripe.checkout.sessions.create({
     customer: customer.id,
     payment_method_types: ['card'],
@@ -45,8 +46,67 @@ export async function criarCheckoutAssinatura(params: {
     cancel_url: params.cancelUrl,
     metadata: { academiaId: params.academiaId, plano: params.plano },
     subscription_data: {
-      trial_period_days: 14, // 14 dias grátis
       metadata: { academiaId: params.academiaId, plano: params.plano },
+    },
+    allow_promotion_codes: true,
+  })
+
+  return {
+    sessionId: session.id,
+    url: session.url!,
+    customerId: customer.id,
+  }
+}
+
+// ─── Checkout PÚBLICO (sem auth, sem academia ainda) ─────────────────────────
+//
+// Usado em /planos-saas pra cliente novo "comprar agora" sem precisar de demo.
+// A academia + usuário são criados no webhook checkout.session.completed
+// quando metadata.source === 'public_signup'.
+export async function criarCheckoutPublico(params: {
+  plano: 'STARTER' | 'PRO' | 'ENTERPRISE'
+  email: string
+  nomeAcademia: string
+  nomeContato: string
+  successUrl: string
+  cancelUrl: string
+}) {
+  const priceId = STRIPE_PRICES[params.plano]
+  if (!priceId) throw new Error(`Plano ${params.plano} sem price ID configurado`)
+
+  // Customer Stripe — academiaId virá depois (será preenchido no webhook).
+  const customer = await stripe.customers.create({
+    email: params.email,
+    name: params.nomeContato,
+    metadata: {
+      source: 'public_signup',
+      nomeAcademia: params.nomeAcademia,
+      plano: params.plano,
+    },
+  })
+
+  const session = await stripe.checkout.sessions.create({
+    customer: customer.id,
+    payment_method_types: ['card'],
+    line_items: [{ price: priceId, quantity: 1 }],
+    mode: 'subscription',
+    success_url: `${params.successUrl}?session={CHECKOUT_SESSION_ID}`,
+    cancel_url: params.cancelUrl,
+    metadata: {
+      source: 'public_signup',
+      plano: params.plano,
+      email: params.email,
+      nomeAcademia: params.nomeAcademia,
+      nomeContato: params.nomeContato,
+    },
+    subscription_data: {
+      metadata: {
+        source: 'public_signup',
+        plano: params.plano,
+        email: params.email,
+        nomeAcademia: params.nomeAcademia,
+        nomeContato: params.nomeContato,
+      },
     },
     allow_promotion_codes: true,
   })

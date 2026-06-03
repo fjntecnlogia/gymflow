@@ -189,7 +189,7 @@ export default function LoginPage() {
             </Button>
             <p className="text-center text-xs text-muted">
               Não tem conta?{' '}
-              <a href="/planos-saas" className="text-cyan font-semibold hover:underline">Criar academia grátis</a>
+              <a href="/planos-saas" className="text-cyan font-semibold hover:underline">Ver planos e assinar</a>
             </p>
           </form>
         )}
