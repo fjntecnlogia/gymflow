@@ -1,7 +1,7 @@
 # GymFlow Gestor — Handoff de Sessão Claude
 
 > Documento pra retomar o trabalho em outra sessão se essa janela travar.
-> Última atualização: 2026-06-03
+> Última atualização: 2026-06-04 (após Builds 1-3 e Google Analytics)
 
 ---
 
@@ -150,22 +150,59 @@ VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID — todos OK
   ```
   sh -c "rm -f /etc/nginx/conf.d/default.conf && /docker-entrypoint.sh nginx -g 'daemon off;'"
   ```
-- 🟡 **PENDENTE:** logar manualmente em https://compreface-fe-production-769b.up.railway.app/, criar Application + Face Recognition Service, copiar API Key e atualizar `COMPREFACE_API_KEY` no Railway service `gymflow`
+- ✅ **API Key gerada e cadastrada** via INSERT direto no banco compreface-db:
+  - App "GYMFLOW" (id=1, criado em 17/05/2026, já existia)
+  - Model "GymFlow Face Recognition" (id=1, type='R')
+  - Promoção do user `gymflowgestao@gmail.com` a OWNER do app (user_app_role)
+  - API Key no service `gymflow` do Railway: cadastrada via CLI
+  - 🔒 TCP Proxy do compreface-db deve ser DESABILITADO no painel após uso
+
+### Google Analytics 4
+- ID: `G-SRZ7HE1DVD`
+- Adicionado em `apps/web/app/layout.tsx` via `<Script>` do Next (strategy `afterInteractive`)
+- Cobre todas as páginas do site (home, /agendar, /login, /planos-saas, /admin/*, /dashboard, etc.)
+
+### Build 1 — Admin SaaS Financeiro robusto
+- Endpoint backend: `GET /admin/financeiro/saas` (em `admin.routes.ts`)
+- Retorna: kpis (MRR, ARR, churn, ticket médio, etc.), distribuição por plano, evolução MRR 12 meses, top 10 academias, em risco
+- Frontend: `/admin/receita/page.tsx` reescrita com 8 KPIs + gráfico evolução + distribuição + top 10 + tabela em risco
+
+### Build 2 — Tutorial de onboarding
+- Schema Prisma: novos campos `onboardingConcluido Boolean @default(false)` + `onboardingConcluidoEm DateTime?` em `Usuario`
+- Service `auth.service.ts`: funções `marcarOnboardingConcluido()` e `resetarOnboarding()`
+- Endpoints: `POST /auth/me/onboarding-concluido`, `POST /auth/me/resetar-onboarding` (preHandler authMiddleware)
+- Login retorna `usuario.onboardingConcluido` no payload
+- Frontend: componente `apps/web/components/onboarding/TutorialOnboarding.tsx` (6 passos: Bem-vindo → Planos → Alunos → Catraca → Acesso → Pronto)
+- Integrado em `/dashboard/page.tsx`: detecta `onboardingConcluido === false` no localStorage e abre modal automaticamente; botão "Ver tutorial" no header
+- Modal tem: barra progresso, navegação por teclado (←→ Esc), dots clicáveis, skip "Pular tutorial"
+
+### Build 3 — Financeiro do gestor robusto
+- Endpoints novos em `pagamentos.routes.ts` + `pagamentos.service.ts`:
+  - `GET /pagamentos/dre` (DRE simplificado do mês)
+  - `GET /pagamentos/fluxo-caixa?dias=30`
+  - `GET /pagamentos/previsao-mrr` (matrículas ativas × valor)
+  - `GET /pagamentos/inadimplentes` (lista detalhada com dias de atraso)
+- Frontend: componente `apps/web/components/financeiro/VisaoGeralFinanceiro.tsx`
+- Integrado em `/financeiro/page.tsx` com abas "Visão Geral" / "Pagamentos"
+- Visão Geral mostra: DRE, previsão MRR, fluxo de caixa 30 dias, tabela inadimplentes com botão "Cobrar via WhatsApp"
 
 ---
 
 ## 🚧 Pendências Conhecidas
 
-1. **CompreFace API Key real** — atualmente `temp-api-key`. Cliente precisa gerar no painel CompreFace e me passar pra cadastrar via:
-   ```bash
-   railway variables --service gymflow --set "COMPREFACE_API_KEY=<uuid-real>"
-   ```
+1. ~~**CompreFace API Key real**~~ ✅ RESOLVIDO — API Key gerada via INSERT direto no banco e cadastrada no Railway.
 
-2. **App mobile dos alunos** — ainda usa Supabase Auth (que está pausado). Ver `MOBILE_MIGRATION_GUIDE.md` pra plano de migração.
+2. **TCP Proxy do compreface-db** — foi habilitado pra eu fazer o INSERT da API Key. Cliente precisa **DESABILITAR** no painel Railway (Settings → Networking → TCP Proxy) por segurança.
 
-3. **DNS — DMARC** — está como `p=reject` no Cloudflare. Recomendado começar com `p=none` e apertar gradualmente (cliente não fez essa mudança).
+3. **App mobile dos alunos** — ainda usa Supabase Auth (que está pausado). Ver `MOBILE_MIGRATION_GUIDE.md` pra plano de migração.
 
-4. **Tokens vazados na sessão** — `VERCEL_TOKEN` e `RESEND_API_KEY` apareceram no histórico do chat. Cliente optou por não revogar (decisão dele).
+4. **DNS — DMARC** — está como `p=reject` no Cloudflare. Recomendado começar com `p=none` e apertar gradualmente (cliente não fez essa mudança).
+
+5. **Tokens vazados na sessão** — `VERCEL_TOKEN` e `RESEND_API_KEY` apareceram no histórico do chat. Cliente optou por não revogar (decisão dele).
+
+6. **Custos operacionais no DRE** — o campo "Custos operacionais" da aba Visão Geral é input livre (estado local). Pra persistir, criar tabela `CustoOperacional` no Prisma + endpoint CRUD.
+
+7. **Email do admin SaaS já validado** — `admin@gymflow.com / Admin@1234` existe no banco CompreFace mas senha pode estar criptografada com hash incompatível. O OWNER global ativo é o user `gymflowgestao@gmail.com` (promovido via SQL no app GYMFLOW).
 
 5. **Cancelar subscription Stripe `incomplete`** — uma subscription `sub_1TeHmPCQ5GXZkVFlEVA190M7` ficou em estado `incomplete` (cartão rejeitado). Não cobra nada mas pode limpar.
 
