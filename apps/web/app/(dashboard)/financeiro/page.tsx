@@ -3,12 +3,13 @@ import { useEffect, useState, useCallback } from 'react'
 import {
   DollarSign, AlertTriangle, Clock, Plus, CheckCircle2, X,
   MessageCircle, ChevronDown, Search, TrendingUp, RefreshCw,
-  Receipt, Banknote, CreditCard, QrCode as QrIcon
+  Receipt, Banknote, CreditCard, QrCode as QrIcon, BarChart3, List
 } from 'lucide-react'
 import { api, getApiError } from '@/lib/api'
 import toast from 'react-hot-toast'
 import dayjs from 'dayjs'
 import 'dayjs/locale/pt-br'
+import { VisaoGeralFinanceiro } from '@/components/financeiro/VisaoGeralFinanceiro'
 dayjs.locale('pt-br')
 
 const METODOS = [
@@ -36,6 +37,7 @@ export default function FinanceiroPage() {
   const [busca, setBusca]           = useState('')
   const [modal, setModal]           = useState(false)
   const [processando, setProcessando] = useState<string | null>(null)
+  const [aba, setAba]               = useState<'visao' | 'pagamentos'>('visao')
 
   const [form, setForm] = useState({
     alunoId: '', valor: '', metodo: 'DINHEIRO',
@@ -141,6 +143,36 @@ export default function FinanceiroPage() {
           <Plus size={16} /> Registrar Pagamento
         </button>
       </div>
+
+      {/* Abas */}
+      <div className="flex items-center gap-1 border-b border-dark-border">
+        <button
+          onClick={() => setAba('visao')}
+          className={`px-4 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-px inline-flex items-center gap-2 ${
+            aba === 'visao'
+              ? 'border-cyan text-cyan'
+              : 'border-transparent text-muted hover:text-white'
+          }`}
+        >
+          <BarChart3 size={14} /> Visão Geral
+        </button>
+        <button
+          onClick={() => setAba('pagamentos')}
+          className={`px-4 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-px inline-flex items-center gap-2 ${
+            aba === 'pagamentos'
+              ? 'border-cyan text-cyan'
+              : 'border-transparent text-muted hover:text-white'
+          }`}
+        >
+          <List size={14} /> Pagamentos
+        </button>
+      </div>
+
+      {/* Aba: Visão Geral */}
+      {aba === 'visao' && <VisaoGeralFinanceiro />}
+
+      {/* Aba: Pagamentos (conteúdo legado abaixo) */}
+      {aba === 'pagamentos' && <>
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -307,6 +339,9 @@ export default function FinanceiroPage() {
           </div>
         )}
       </div>
+
+      </>}
+      {/* /aba pagamentos */}
 
       {/* Modal Registrar Pagamento */}
       {modal && (

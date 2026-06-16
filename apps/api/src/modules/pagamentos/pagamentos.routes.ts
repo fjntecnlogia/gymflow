@@ -10,7 +10,7 @@ const cobrarSchema = z.object({
   alunoId:       z.string(),
   matriculaId:   z.string().optional(),
   valor:         z.number().positive(),
-  descricao:     z.string().default('Mensalidade GYMFLOW'),
+  descricao:     z.string().default('Mensalidade GymFlow Gestor'),
   dataVencimento: z.string(),
 })
 
@@ -114,5 +114,37 @@ export async function pagamentosRoutes(app: FastifyInstance) {
 
   app.get('/resumo', async (req) => {
     return service.resumoFinanceiro((req as any).academiaId)
+  })
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // FINANCEIRO ROBUSTO (DRE + Fluxo de caixa + Previsão + Inadimplentes)
+  // ──────────────────────────────────────────────────────────────────────────
+
+  // GET /pagamentos/dre — DRE simplificado do mês
+  app.get('/dre', async (req) => {
+    const academiaId = (req as any).academiaId
+    const q = req.query as any
+    const mes = q.mes ? new Date(q.mes + '-01') : new Date()
+    return service.dreSimplificado(academiaId, mes)
+  })
+
+  // GET /pagamentos/fluxo-caixa?dias=30 — entradas/saídas por dia
+  app.get('/fluxo-caixa', async (req) => {
+    const academiaId = (req as any).academiaId
+    const q = req.query as any
+    const dias = Number(q.dias ?? 30)
+    return service.fluxoCaixa(academiaId, dias)
+  })
+
+  // GET /pagamentos/previsao-mrr — soma das matrículas ativas
+  app.get('/previsao-mrr', async (req) => {
+    const academiaId = (req as any).academiaId
+    return service.previsaoMrr(academiaId)
+  })
+
+  // GET /pagamentos/inadimplentes — lista detalhada com dias de atraso
+  app.get('/inadimplentes', async (req) => {
+    const academiaId = (req as any).academiaId
+    return service.listarInadimplentes(academiaId)
   })
 }

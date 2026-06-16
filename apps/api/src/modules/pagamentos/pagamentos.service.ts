@@ -178,6 +178,177 @@ export class PagamentosService {
     })
   }
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // Novos endpoints — financeiro robusto
+  // ──────────────────────────────────────────────────────────────────────────
+
+  async dreSimplificado(academiaId: string, mes: Date) {
+    const inicioMes = dayjs(mes).startOf('month').toDate()
+    const fimMes = dayjs(mes).endOf('month').toDate()
+    const inicioMesAnt = dayjs(mes).subtract(1, 'month').startOf('month').toDate()
+    const fimMesAnt = dayjs(mes).subtract(1, 'month').endOf('month').toDate()
+
+    const [recebido, recebidoAnt, pendente, vencido] = await Promise.all([
+      prisma.pagamento.aggregate({
+        where: { academiaId, status: 'PAGO', dataPagamento: { gte: inicioMes, lte: fimMes } },
+        _sum: { valor: true }, _count: true,
+      }),
+      prisma.pagamento.aggregate({
+        where: { academiaId, status: 'PAGO', dataPagamento: { gte: inicioMesAnt, lte: fimMesAnt } },
+        _sum: { valor: true },
+      }),
+      prisma.pagamento.aggregate({
+        where: { academiaId, status: 'PENDENTE', dataVencimento: { gte: inicioMes, lte: fimMes } },
+        _sum: { valor: true }, _count: true,
+      }),
+      prisma.pagamento.aggregate({
+        where: { academiaId, status: 'VENCIDO' },
+        _sum: { valor: true }, _count: true,
+      }),
+    ])
+
+    const receitaBruta = recebido._sum.valor ?? 0
+    const receitaAnt = recebidoAnt._sum.valor ?? 0
+    const inadimplencia = (vencido._sum.valor ?? 0) + (pendente._sum.valor ?? 0)
+    const variacaoMoM =
+      receitaAnt > 0 ? ((receitaBruta - receitaAnt) / receitaAnt) * 100 : 0
+
+    return {
+      mes: dayjs(mes).format('YYYY-MM'),
+      receitaBruta,
+      receitaAnt,
+      variacaoMoM: Number(variacaoMoM.toFixed(2)),
+      qtdRecebidos: recebido._count,
+      pendente: pendente._sum.valor ?? 0,
+      qtdPendente: pendente._count,
+      vencido: vencido._sum.valor ?? 0,
+      qtdVencido: vencido._count,
+      inadimplenciaTotal: inadimplencia,
+      // Resultado líquido = receitaBruta menos custos (custos = livre, default 0)
+      // Aqui só expomos receita; custos ficam no front pra o dono preencher
+      resultadoLiquido: receitaBruta,
+    }
+  }
+
+  async fluxoCaixa(academiaId: string, dias: number) {
+    const inicio = dayjs().subtract(dias - 1, 'day').startOf('day').toDate()
+    const fim = dayjs().endOf('day').toDate()
+
+    const pagos = await prisma.pagamento.findMany({
+      where: {
+        academiaId,
+        status: 'PAGO',
+        dataPagamento: { gte: inicio, lte: fim },
+      },
+      select: { valor: true, dataPagamento: true },
+      orderBy: { dataPagamento: 'asc' },
+    })
+
+    // Agrupa por dia (YYYY-MM-DD)
+    const map = new Map<string, number>()
+    for (let i = 0; i < dias; i++) {
+      const dia = dayjs(inicio).add(i, 'day').format('YYYY-MM-DD')
+      map.set(dia, 0)
+    }
+    for (const p of pagos) {
+      if (!p.dataPagamento) continue
+      const dia = dayjs(p.dataPagamento).format('YYYY-MM-DD')
+      map.set(dia, (map.get(dia) ?? 0) + p.valor)
+    }
+
+    let saldo = 0
+    const serie = Array.from(map.entries()).map(([dia, entrada]) => {
+      saldo += entrada
+      return { dia, entrada, saldo }
+    })
+
+    return {
+      periodo: { inicio: dayjs(inicio).format('YYYY-MM-DD'), fim: dayjs(fim).format('YYYY-MM-DD') },
+      totalEntradas: serie.reduce((s, d) => s + d.entrada, 0),
+      mediaEntradaDiaria: Number((serie.reduce((s, d) => s + d.entrada, 0) / dias).toFixed(2)),
+      serie,
+    }
+  }
+
+  async previsaoMrr(academiaId: string) {
+    // Soma das matrículas ativas (valorPago é a mensalidade contratada)
+    const matriculasAtivas = await prisma.matricula.findMany({
+      where: {
+        academiaId,
+        status: 'ATIVO',
+      },
+      select: { id: true, valorPago: true, planoId: true, alunoId: true },
+    })
+
+    const mrrPrevisto = matriculasAtivas.reduce((s, m) => s + (m.valorPago ?? 0), 0)
+    const ticketMedio =
+      matriculasAtivas.length > 0 ? mrrPrevisto / matriculasAtivas.length : 0
+
+    // Distribuição por plano
+    const porPlano = new Map<string, { qtd: number; total: number }>()
+    for (const m of matriculasAtivas) {
+      const key = m.planoId
+      const cur = porPlano.get(key) ?? { qtd: 0, total: 0 }
+      cur.qtd += 1
+      cur.total += m.valorPago ?? 0
+      porPlano.set(key, cur)
+    }
+
+    return {
+      mrrPrevisto,
+      alunosAtivos: matriculasAtivas.length,
+      ticketMedio: Number(ticketMedio.toFixed(2)),
+      arrPrevisto: mrrPrevisto * 12,
+      porPlano: Array.from(porPlano.entries()).map(([planoId, dados]) => ({
+        planoId,
+        qtd: dados.qtd,
+        total: dados.total,
+      })),
+    }
+  }
+
+  async listarInadimplentes(academiaId: string) {
+    const hoje = new Date()
+
+    // Inadimplentes = pagamentos VENCIDO (atrasados) ou PENDENTE com vencimento passado
+    const items = await prisma.pagamento.findMany({
+      where: {
+        academiaId,
+        OR: [
+          { status: 'VENCIDO' },
+          {
+            status: 'PENDENTE',
+            dataVencimento: { lt: hoje },
+          },
+        ],
+      },
+      include: {
+        aluno: {
+          select: { id: true, nome: true, telefone: true, email: true, status: true },
+        },
+      },
+      orderBy: { dataVencimento: 'asc' },
+    })
+
+    return items.map((p) => {
+      const diasAtraso = Math.floor(
+        (hoje.getTime() - new Date(p.dataVencimento).getTime()) / (1000 * 60 * 60 * 24),
+      )
+      return {
+        pagamentoId: p.id,
+        alunoId: p.aluno.id,
+        nome: p.aluno.nome,
+        telefone: p.aluno.telefone,
+        email: p.aluno.email,
+        statusAluno: p.aluno.status,
+        valor: p.valor,
+        dataVencimento: p.dataVencimento,
+        diasAtraso: Math.max(0, diasAtraso),
+        descricao: p.descricao,
+      }
+    })
+  }
+
   async resumoFinanceiro(academiaId: string) {
     const inicioMes = dayjs().startOf('month').toDate()
     const fimMes = dayjs().endOf('month').toDate()
