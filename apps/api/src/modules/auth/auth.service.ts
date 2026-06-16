@@ -123,6 +123,7 @@ export async function loginComSenha(email: string, senha: string) {
       role: usuario.role,
       academiaId: usuario.academiaId,
       academiaStatus: usuario.academia.status,
+      onboardingConcluido: usuario.onboardingConcluido,
     },
   }
 }
@@ -177,8 +178,31 @@ export async function registrarSenhaPrimeiroAcesso(token: string, novaSenha: str
       role: atualizado.role,
       academiaId: atualizado.academiaId,
       academiaStatus: atualizado.academia.status,
+      onboardingConcluido: atualizado.onboardingConcluido,
     },
   }
+}
+
+// ─── Onboarding ──────────────────────────────────────────────────────────────
+
+export async function marcarOnboardingConcluido(usuarioId: string) {
+  await prisma.usuario.update({
+    where: { id: usuarioId },
+    data: {
+      onboardingConcluido: true,
+      onboardingConcluidoEm: new Date(),
+    },
+  })
+}
+
+export async function resetarOnboarding(usuarioId: string) {
+  await prisma.usuario.update({
+    where: { id: usuarioId },
+    data: {
+      onboardingConcluido: false,
+      onboardingConcluidoEm: null,
+    },
+  })
 }
 
 // ─── Esqueci senha ──────────────────────────────────────────────────────────

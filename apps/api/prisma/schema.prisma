@@ -73,6 +73,10 @@ model Usuario {
   tokenResetSenhaExpira     DateTime?
   ultimoLoginEm             DateTime?
 
+  // ─── Onboarding (tutorial primeira vez) ────────────────────────
+  onboardingConcluido       Boolean   @default(false)
+  onboardingConcluidoEm     DateTime?
+
   criadoEm     DateTime    @default(now())
   atualizadoEm DateTime    @updatedAt
 

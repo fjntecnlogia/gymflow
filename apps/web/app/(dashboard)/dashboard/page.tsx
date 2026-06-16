@@ -1,17 +1,27 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { KpiCard } from '@/components/dashboard/KpiCard'
-import { Users, DollarSign, ShieldAlert, Activity } from 'lucide-react'
+import { Users, DollarSign, ShieldAlert, Activity, HelpCircle } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { api } from '@/lib/api'
 import dayjs from 'dayjs'
+import { TutorialOnboarding } from '@/components/onboarding/TutorialOnboarding'
 
 export default function DashboardPage() {
   const [kpis, setKpis] = useState<any>(null)
   const [acessos, setAcessos] = useState<any[]>([])
   const [ultimos, setUltimos] = useState<any[]>([])
+  const [mostrarTutorial, setMostrarTutorial] = useState(false)
 
   useEffect(() => {
+    // Detecta primeiro acesso pelo localStorage (setado no login)
+    try {
+      const stored = JSON.parse(localStorage.getItem('gymflow_usuario') || '{}')
+      if (stored && stored.onboardingConcluido === false) {
+        setMostrarTutorial(true)
+      }
+    } catch { /* noop */ }
+
     Promise.all([
       api.get('/dashboard/kpis'),
       api.get('/dashboard/acessos-por-dia'),
@@ -30,7 +40,18 @@ export default function DashboardPage() {
           <h1 className="font-display text-2xl font-bold">Dashboard</h1>
           <p className="text-sm text-muted mt-0.5">{dayjs().format('dddd, DD [de] MMMM [de] YYYY')}</p>
         </div>
+        <button
+          onClick={() => setMostrarTutorial(true)}
+          className="text-xs text-muted hover:text-cyan transition-colors inline-flex items-center gap-1.5"
+          title="Ver tutorial novamente"
+        >
+          <HelpCircle size={14} /> Ver tutorial
+        </button>
       </div>
+
+      {mostrarTutorial && (
+        <TutorialOnboarding onClose={() => setMostrarTutorial(false)} />
+      )}
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <KpiCard label="Alunos Ativos" value={kpis?.alunosAtivos ?? '–'} color="cyan" icon={<Users size={16} />} highlight />

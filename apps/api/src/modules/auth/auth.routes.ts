@@ -8,12 +8,15 @@ import {
   registrarSenhaPrimeiroAcesso,
   gerarTokenResetSenha,
   redefinirSenha,
+  marcarOnboardingConcluido,
+  resetarOnboarding,
   CredenciaisInvalidasError,
   UsuarioInativoError,
   SenhaNaoDefinidaError,
   TokenPrimeiroAcessoInvalidoError,
   TokenResetSenhaInvalidoError,
 } from './auth.service'
+import { authMiddleware } from '../../middleware/auth.middleware'
 import {
   enviarEmail,
   templatePrimeiroAcesso,
@@ -141,6 +144,20 @@ export async function authRoutes(app: FastifyInstance) {
       ok: true,
       message: 'Se o e-mail existir, enviaremos um link de redefinição.',
     })
+  })
+
+  // POST /auth/me/onboarding-concluido — marca tutorial como visto (autenticado)
+  app.post('/me/onboarding-concluido', { preHandler: authMiddleware }, async (req) => {
+    const usuario = (req as any).usuario
+    await marcarOnboardingConcluido(usuario.id)
+    return { ok: true }
+  })
+
+  // POST /auth/me/resetar-onboarding — força o tutorial aparecer de novo
+  app.post('/me/resetar-onboarding', { preHandler: authMiddleware }, async (req) => {
+    const usuario = (req as any).usuario
+    await resetarOnboarding(usuario.id)
+    return { ok: true }
   })
 
   // POST /auth/redefinir-senha — recebe token + nova senha
