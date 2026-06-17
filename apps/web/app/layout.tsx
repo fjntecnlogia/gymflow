@@ -13,9 +13,22 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.gymflowgestor.com.br'),
   title: 'GymFlow Gestor — Sua academia. Sob controle.',
   description: 'Sistema de gestão completo para academias: controle de acesso, financeiro e app do aluno.',
+  icons: {
+    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
   openGraph: {
     title: 'GymFlow Gestor',
     description: 'Gestão inteligente para academias brasileiras',
+    type: 'website',
+    locale: 'pt_BR',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'GymFlow Gestor — Sua academia. Sob controle.' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'GymFlow Gestor',
+    description: 'Gestão inteligente para academias brasileiras',
+    images: ['/og-image.png'],
   },
 }
 

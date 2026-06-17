@@ -607,9 +607,10 @@ export default function LandingPage() {
               <div className="text-xs font-bold uppercase tracking-widest text-white mb-3">Empresa</div>
               <ul className="space-y-2 text-sm text-muted">
                 <li><Link href="/login" className="hover:text-white transition-colors">Entrar</Link></li>
-                <li><Link href="/agendar" className="hover:text-white transition-colors">Criar conta</Link></li>
-                <li><a href="#" className="hover:text-white transition-colors">Termos de uso</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacidade</a></li>
+                <li><Link href="/planos-saas" className="hover:text-white transition-colors">Criar conta</Link></li>
+                <li><Link href="/termos" className="hover:text-white transition-colors">Termos de uso</Link></li>
+                <li><Link href="/privacidade" className="hover:text-white transition-colors">Privacidade</Link></li>
+                <li><Link href="/excluir-conta" className="hover:text-white transition-colors">Excluir conta</Link></li>
               </ul>
             </div>
             <div>
