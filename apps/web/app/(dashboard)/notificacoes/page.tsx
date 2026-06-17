@@ -34,7 +34,7 @@ export default function NotificacoesPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loadingStatus, setLoadingStatus] = useState(true)
   const [testeFone, setTesteFone] = useState('')
-  const [testeMsg, setTesteMsg] = useState('Olá! Esta é uma mensagem de teste do GYMFLOW 💪')
+  const [testeMsg, setTesteMsg] = useState('Olá! Esta é uma mensagem de teste do GymFlow Gestor 💪')
   const [enviandoTeste, setEnviandoTeste] = useState(false)
   const poolingRef = useRef<NodeJS.Timeout>()
 

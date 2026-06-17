@@ -75,7 +75,7 @@ export default function PlanoScreen() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#08080F" },
   pageTitle: { fontSize: 22, fontWeight: "800", color: "#fff", padding: 20, paddingTop: 60 },
-  planCard: { marginHorizontal: 20, borderRadius: 20, padding: 20, background: "linear-gradient(135deg,#00E5FF,#0066FF)", backgroundColor: "#00C4E0", marginBottom: 16 },
+  planCard: { marginHorizontal: 20, borderRadius: 20, padding: 20, backgroundColor: "#00C4E0", marginBottom: 16 },
   planCardLabel: { fontSize: 10, fontWeight: "700", color: "rgba(8,8,15,0.6)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 4 },
   planCardName: { fontSize: 22, fontWeight: "900", color: "#08080F", letterSpacing: -0.5 },
   planCardPrice: { fontSize: 14, color: "rgba(8,8,15,0.7)", marginTop: 4 },

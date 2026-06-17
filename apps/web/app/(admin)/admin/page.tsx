@@ -93,7 +93,7 @@ export default function AdminPage() {
         <div className="flex items-center gap-3">
           <div>
             <h1 className="font-display text-2xl font-bold">Admin SaaS</h1>
-            <p className="text-sm text-muted">Gerenciamento da plataforma GYMFLOW</p>
+            <p className="text-sm text-muted">Gerenciamento da plataforma GymFlow Gestor</p>
           </div>
           <span className="bg-orange/20 border border-orange/40 text-orange text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
             <Shield size={10} /> SUPER ADMIN

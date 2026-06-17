@@ -21,7 +21,7 @@ export default function AdminPlanosPage() {
     <div className="p-6 space-y-6">
       <div>
         <h1 className="font-display text-2xl font-bold">Planos SaaS</h1>
-        <p className="text-muted text-sm">Configuração dos planos oferecidos pelo GYMFLOW</p>
+        <p className="text-muted text-sm">Configuração dos planos oferecidos pelo GymFlow Gestor</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

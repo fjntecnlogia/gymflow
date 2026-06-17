@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const GA_ID = 'G-SRZ7HE1DVD'
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://web-gules-phi-97.vercel.app'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.gymflowgestor.com.br'),
   title: 'GymFlow Gestor — Sua academia. Sob controle.',
   description: 'Sistema de gestão completo para academias: controle de acesso, financeiro e app do aluno.',
   openGraph: {

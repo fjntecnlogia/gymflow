@@ -246,7 +246,7 @@ export default function CatracasPage() {
             </div>
 
             <div className="text-xs text-muted bg-dark-card rounded-lg p-3">
-              <strong className="text-white">Como funciona:</strong> O servidor GYMFLOW se comunica com a catraca via rede local ou VPN.
+              <strong className="text-white">Como funciona:</strong> O servidor GymFlow Gestor se comunica com a catraca via rede local ou VPN.
               Certifique-se que o servidor tem acesso ao IP informado.
             </div>
 

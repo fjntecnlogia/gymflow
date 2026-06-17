@@ -34,13 +34,13 @@ async function bootstrap() {
     origin: (origin, cb) => {
       const allowed = [
         process.env.WEB_URL ?? '',
-        'https://web-gules-phi-97.vercel.app',
         'http://localhost:3000',
         'http://localhost:19006',
       ].filter(Boolean)
 
-      // Permite qualquer subdomínio da Vercel (previews) e origens nulas (curl/Postman)
-      if (!origin || allowed.includes(origin) || origin.endsWith('.vercel.app')) {
+      if (!origin && process.env.NODE_ENV !== 'production') {
+        cb(null, true)
+      } else if (origin && allowed.includes(origin)) {
         cb(null, true)
       } else {
         cb(null, false)
@@ -50,7 +50,10 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   })
 
-  await app.register(jwt, { secret: process.env.JWT_SECRET ?? 'dev-secret-32chars-minimum!!' })
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET é obrigatório — defina no Railway antes de subir')
+  }
+  await app.register(jwt, { secret: process.env.JWT_SECRET })
 
   await app.register(rateLimit, { max: 300, timeWindow: '1 minute' })
 
@@ -67,10 +70,12 @@ async function bootstrap() {
     },
   })
 
-  await app.register(swaggerUi, {
-    routePrefix: '/docs',
-    uiConfig: { docExpansion: 'list', deepLinking: false },
-  })
+  if (process.env.NODE_ENV !== 'production') {
+    await app.register(swaggerUi, {
+      routePrefix: '/docs',
+      uiConfig: { docExpansion: 'list', deepLinking: false },
+    })
+  }
 
   app.register(authRoutes,         { prefix: '/auth' })
   app.register(academiasRoutes,    { prefix: '/academias' })
@@ -86,9 +91,9 @@ async function bootstrap() {
   app.register(biometriaRoutes,   { prefix: '/biometria' })
   app.register(agendamentosRoutes, { prefix: '/agendamentos' })
 
-  // ─── Seed temporário WhatsApp (público, chave secreta) ─────────────────────
   app.post('/seed-whatsapp', async (req, reply) => {
-    if (req.headers['x-seed-key'] !== 'gymflow-seed-2026') {
+    const seedKey = process.env.SEED_KEY
+    if (!seedKey || req.headers['x-seed-key'] !== seedKey) {
       return reply.status(403).send({ error: 'Forbidden' })
     }
     const { academiaSlug, sessionFiles } = req.body as any
@@ -110,12 +115,13 @@ async function bootstrap() {
   }))
 
   app.setErrorHandler((error, req, reply) => {
-    app.log.error(error)
+    app.log.error({ msg: error.message, statusCode: error.statusCode, url: req.url })
     if (error.validation) {
       return reply.status(400).send({ error: 'Dados inválidos', details: error.validation })
     }
+    const isProd = process.env.NODE_ENV === 'production'
     return reply.status(error.statusCode ?? 500).send({
-      error: error.message ?? 'Erro interno do servidor',
+      error: isProd && !error.statusCode ? 'Erro interno do servidor' : error.message,
     })
   })
 
@@ -123,8 +129,7 @@ async function bootstrap() {
 
   const porta = Number(process.env.PORT) || 3001
   await app.listen({ port: porta, host: '0.0.0.0' })
-  console.log(`\n🚀 GymFlow Gestor API rodando em http://localhost:${porta}`)
-  console.log(`📚 Documentação: http://localhost:${porta}/docs\n`)
+  app.log.info(`GymFlow Gestor API rodando na porta ${porta}`)
 }
 
 bootstrap().catch((err) => {

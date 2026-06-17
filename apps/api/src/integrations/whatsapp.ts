@@ -87,7 +87,7 @@ export class WhatsAppService {
   async enviarBoasVindas(params: { telefone: string; nomeAluno: string; academia: string; academiaId: string; alunoId: string }) {
     return this.enviarMensagem({
       telefone: params.telefone,
-      mensagem: `🎉 *Bem-vindo(a) à ${params.academia}!*\n\nOlá, *${params.nomeAluno}*! Seu cadastro foi criado com sucesso.\n\nBaixe o app GYMFLOW para acessar seu QR Code de entrada e gerenciar seu plano. 💪\n\n_GYMFLOW — Sua academia inteligente_`,
+      mensagem: `🎉 *Bem-vindo(a) à ${params.academia}!*\n\nOlá, *${params.nomeAluno}*! Seu cadastro foi criado com sucesso.\n\nBaixe o app GymFlow Gestor para acessar seu QR Code de entrada e gerenciar seu plano. 💪\n\n_GymFlow Gestor — Sua academia inteligente_`,
       academiaId: params.academiaId,
       alunoId: params.alunoId,
       tipo: 'boas_vindas',
@@ -106,7 +106,7 @@ export class WhatsAppService {
 
     return this.enviarMensagem({
       telefone: params.telefone,
-      mensagem: `${urgencia} Olá, *${params.nomeAluno}*!\n\n${texto.charAt(0).toUpperCase() + texto.slice(1)}.\n\n📋 Plano: *${params.plano}*\n💰 Valor: *R$ ${params.valor.toFixed(2)}*\n📅 Vencimento: *${params.dataVencimento}*\n\nPague agora com PIX:\n${params.linkPagamento}\n\n_GYMFLOW_`,
+      mensagem: `${urgencia} Olá, *${params.nomeAluno}*!\n\n${texto.charAt(0).toUpperCase() + texto.slice(1)}.\n\n📋 Plano: *${params.plano}*\n💰 Valor: *R$ ${params.valor.toFixed(2)}*\n📅 Vencimento: *${params.dataVencimento}*\n\nPague agora com PIX:\n${params.linkPagamento}\n\n_GymFlow Gestor_`,
       academiaId: params.academiaId,
       alunoId: params.alunoId,
       tipo: 'vencimento',
@@ -119,7 +119,7 @@ export class WhatsAppService {
   }) {
     return this.enviarMensagem({
       telefone: params.telefone,
-      mensagem: `🔴 Olá, *${params.nomeAluno}*!\n\nSeu acesso foi *bloqueado* por ${params.diasAtraso} dia${params.diasAtraso > 1 ? 's' : ''} de atraso no pagamento.\n\nRegularize agora para voltar a treinar:\n${params.linkPagamento}\n\nDúvidas? Fale com a recepção. 💬\n\n_GYMFLOW_`,
+      mensagem: `🔴 Olá, *${params.nomeAluno}*!\n\nSeu acesso foi *bloqueado* por ${params.diasAtraso} dia${params.diasAtraso > 1 ? 's' : ''} de atraso no pagamento.\n\nRegularize agora para voltar a treinar:\n${params.linkPagamento}\n\nDúvidas? Fale com a recepção. 💬\n\n_GymFlow Gestor_`,
       academiaId: params.academiaId,
       alunoId: params.alunoId,
       tipo: 'inadimplencia',
@@ -132,7 +132,7 @@ export class WhatsAppService {
   }) {
     return this.enviarMensagem({
       telefone: params.telefone,
-      mensagem: `✅ *Pagamento confirmado!*\n\nOlá, *${params.nomeAluno}*!\n\nSeu pagamento foi recebido com sucesso.\n\n📋 Plano: *${params.plano}*\n📅 Válido até: *${params.dataVencimento}*\n\nBons treinos! 💪\n\n_GYMFLOW_`,
+      mensagem: `✅ *Pagamento confirmado!*\n\nOlá, *${params.nomeAluno}*!\n\nSeu pagamento foi recebido com sucesso.\n\n📋 Plano: *${params.plano}*\n📅 Válido até: *${params.dataVencimento}*\n\nBons treinos! 💪\n\n_GymFlow Gestor_`,
       academiaId: params.academiaId,
       alunoId: params.alunoId,
       tipo: 'pagamento_confirmado',
@@ -145,7 +145,7 @@ export class WhatsAppService {
   }) {
     return this.enviarMensagem({
       telefone: params.telefone,
-      mensagem: `💪 Ei, *${params.nomeAluno}*!\n\nFaz *${params.diasSemAcesso} dias* que você não treina.\n\nSua academia está te esperando. Que tal voltar hoje? 🏋️\n\n_GYMFLOW — Sua academia inteligente_`,
+      mensagem: `💪 Ei, *${params.nomeAluno}*!\n\nFaz *${params.diasSemAcesso} dias* que você não treina.\n\nSua academia está te esperando. Que tal voltar hoje? 🏋️\n\n_GymFlow Gestor — Sua academia inteligente_`,
       academiaId: params.academiaId,
       alunoId: params.alunoId,
       tipo: 'reengajamento',
@@ -158,7 +158,7 @@ export class WhatsAppService {
   }) {
     return this.enviarMensagem({
       telefone: params.telefone,
-      mensagem: `🎂 *Feliz aniversário, ${params.nomeAluno}!*\n\nToda a equipe da *${params.academia}* deseja um dia incrível para você!\n\nComo presente, aqui vai muita energia positiva para os seus treinos. 🎁💪\n\n_GYMFLOW_`,
+      mensagem: `🎂 *Feliz aniversário, ${params.nomeAluno}!*\n\nToda a equipe da *${params.academia}* deseja um dia incrível para você!\n\nComo presente, aqui vai muita energia positiva para os seus treinos. 🎁💪\n\n_GymFlow Gestor_`,
       academiaId: params.academiaId,
       alunoId: params.alunoId,
       tipo: 'aniversario',

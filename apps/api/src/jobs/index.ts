@@ -8,21 +8,21 @@ import dayjs from 'dayjs'
 const pagamentosService = new PagamentosService()
 const wa = new WhatsAppService()
 
-export const cobrancaQueue = new Queue('cobranca', { connection: redis })
-export const notificacaoQueue = new Queue('notificacao', { connection: redis })
+export const cobrancaQueue = new Queue('cobranca', { connection: redis as any })
+export const notificacaoQueue = new Queue('notificacao', { connection: redis as any })
 
 export function startJobs() {
   new Worker('cobranca', async (job) => {
     if (job.name === 'processar-vencimentos') {
       await processarVencimentos()
     }
-  }, { connection: redis })
+  }, { connection: redis as any })
 
   new Worker('notificacao', async (job) => {
     if (job.name === 'reengajamento') {
       await processarReengajamento()
     }
-  }, { connection: redis })
+  }, { connection: redis as any })
 
   cobrancaQueue.add('processar-vencimentos', {}, {
     repeat: { pattern: '0 8 * * *' },
@@ -99,7 +99,7 @@ async function processarReengajamento() {
     if (aluno.telefone) {
       await wa.enviarMensagem({
         telefone: aluno.telefone,
-        mensagem: `💪 Ei, *${aluno.nome}*! Faz 7 dias que você não treina.\n\nSua academia está te esperando. Bora voltar! 🏋️\n\n_GYMFLOW_`,
+        mensagem: `💪 Ei, *${aluno.nome}*! Faz 7 dias que você não treina.\n\nSua academia está te esperando. Bora voltar! 🏋️\n\n_GymFlow Gestor_`,
         academiaId: aluno.academiaId,
         alunoId: aluno.id,
         tipo: 'reengajamento',

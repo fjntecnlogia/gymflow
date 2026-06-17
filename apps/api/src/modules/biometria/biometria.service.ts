@@ -8,7 +8,7 @@ const CF_API  = process.env.COMPREFACE_API_URL  ?? 'https://compreface-api-produ
 const CF_KEY  = process.env.COMPREFACE_API_KEY  ?? 'aa35b15c-56a9-4d9c-b582-ecde23ad0757'
 
 /**
- * Serviço de biometria facial para GYMFLOW.
+ * Serviço de biometria facial para GymFlow Gestor.
  *
  * Endpoint confirmado do CompreFace Core:
  *   POST /find_faces
@@ -126,7 +126,7 @@ export class BiometriaService {
       }
       return { ok: true, reconhecido: false, metodo: 'compreface-api' }
     } catch {
-      // Fallback: Core + embeddings no GYMFLOW DB
+      // Fallback: Core + embeddings no GymFlow Gestor DB
     }
 
     // Calcular embedding da imagem recebida

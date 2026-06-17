@@ -1,4 +1,4 @@
-﻿# 🏋️ GYMFLOW — Sistema de Gestão para Academias
+﻿# 🏋️ GymFlow Gestor — Sistema de Gestão para Academias
 
 > SaaS completo para gestão de academias brasileiras: controle de acesso, financeiro, app do aluno e painel administrativo.
 
@@ -231,4 +231,4 @@ Configure no painel do Railway/Vercel todas as variáveis do `.env.example`.
 
 ---
 
-*GYMFLOW v1.0.0 — FJN Tecnologia · 2026*
+*GymFlow Gestor v1.0.0 — FJN Tecnologia · 2026*

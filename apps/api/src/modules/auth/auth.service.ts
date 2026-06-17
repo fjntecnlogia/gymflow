@@ -18,7 +18,7 @@ import { prisma } from '../../lib/prisma'
 //   2. POST /auth/redefinir-senha { token, novaSenha } → atualiza senhaHash
 // ─────────────────────────────────────────────────────────────────────────────
 
-const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret-32chars-minimum!!'
+const JWT_SECRET = process.env.JWT_SECRET ?? (() => { throw new Error('JWT_SECRET não definido') })()
 const JWT_EXPIRES_IN = '30d'
 const BCRYPT_ROUNDS = 10
 const TOKEN_PRIMEIRO_ACESSO_EXPIRA_DIAS = 7

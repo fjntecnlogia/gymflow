@@ -41,7 +41,7 @@ export function Sidebar() {
     <aside className="w-[220px] min-h-screen bg-[#0D0D1A] border-r border-dark-border flex flex-col">
       <div className="h-16 flex items-center px-5 border-b border-dark-border">
         <span className="font-display font-extrabold text-lg tracking-tight">
-          <span className="text-cyan">GYM</span>FLOW
+          <span className="text-cyan">Gym</span>Flow <span className="text-muted font-medium">Gestor</span>
         </span>
       </div>
 

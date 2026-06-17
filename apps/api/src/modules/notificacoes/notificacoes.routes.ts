@@ -88,7 +88,7 @@ export async function notificacoesRoutes(app: FastifyInstance) {
     if (!aluno.telefone) return reply.status(400).send({ error: 'Aluno sem telefone cadastrado' })
 
     const mat = aluno.matriculas[0]
-    const msgText = `Olá, *${aluno.nome}*! 👋\n\nLembrando que ${mat ? `seu plano *${mat.plano.nome}* vence em breve` : 'sua mensalidade está pendente'}.\n\nQualquer dúvida, fale conosco! 💪\n\n_GYMFLOW_`
+    const msgText = `Olá, *${aluno.nome}*! 👋\n\nLembrando que ${mat ? `seu plano *${mat.plano.nome}* vence em breve` : 'sua mensalidade está pendente'}.\n\nQualquer dúvida, fale conosco! 💪\n\n_GymFlow Gestor_`
 
     const bridge = getWhatsAppBridge()
     const ok = await bridge.enviarMensagem(aluno.telefone, msgText)

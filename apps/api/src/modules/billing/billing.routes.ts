@@ -17,7 +17,7 @@ import {
 } from '../../integrations/email'
 import { z } from 'zod'
 
-const WEB_URL = process.env.WEB_URL ?? 'https://web-gules-phi-97.vercel.app'
+const WEB_URL = process.env.WEB_URL ?? 'https://www.gymflowgestor.com.br'
 const ADMIN_LEAD_EMAIL = process.env.ADMIN_LEAD_EMAIL ?? 'contato@gymflowgestor.com.br'
 
 /**

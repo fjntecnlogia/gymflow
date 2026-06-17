@@ -80,7 +80,7 @@ export class PixService {
       valor: { original: params.valor.toFixed(2) },
       chave: process.env.PIX_CHAVE,
       solicitacaoPagador: params.descricao,
-      infoAdicionais: [{ nome: 'Sistema', valor: 'GYMFLOW' }],
+      infoAdicionais: [{ nome: 'Sistema', valor: 'GymFlow Gestor' }],
     }, {
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     })

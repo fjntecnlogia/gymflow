@@ -1,8 +1,8 @@
 import { prisma } from '../../lib/prisma'
-import { criarCheckoutSession, consultarSession } from '../../integrations/stripe'
+import { stripe } from '../../integrations/stripe'
 import dayjs from 'dayjs'
 
-const WEB_URL = process.env.WEB_URL ?? 'https://web-gules-phi-97.vercel.app'
+const WEB_URL = process.env.WEB_URL ?? 'https://www.gymflowgestor.com.br'
 
 export class PagamentosService {
   async listar(academiaId: string, params: { status?: string; page?: number; limit?: number }) {
@@ -32,17 +32,23 @@ export class PagamentosService {
 
     const valorCentavos = Math.round(dados.valor * 100)
 
-    const checkout = await criarCheckoutSession({
-      alunoNome: aluno.nome,
-      alunoEmail: aluno.email ?? '',
-      descricao: dados.descricao,
-      valor: valorCentavos,
-      academiaId,
-      alunoId: dados.alunoId,
-      matriculaId: dados.matriculaId,
-      successUrl: `${WEB_URL}/pagamento-sucesso?session={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${WEB_URL}/financeiro`,
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      customer_email: aluno.email ?? undefined,
+      line_items: [{
+        price_data: {
+          currency: 'brl',
+          unit_amount: valorCentavos,
+          product_data: { name: dados.descricao },
+        },
+        quantity: 1,
+      }],
+      metadata: { academiaId, alunoId: dados.alunoId, matriculaId: dados.matriculaId ?? '' },
+      success_url: `${WEB_URL}/pagamento-sucesso?session={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${WEB_URL}/financeiro`,
     })
+    const checkout = { sessionId: session.id, url: session.url! }
 
     const pagamento = await prisma.pagamento.create({
       data: {
@@ -63,7 +69,7 @@ export class PagamentosService {
   }
 
   async confirmarPagamentoStripe(sessionId: string) {
-    const session = await consultarSession(sessionId)
+    const session = await stripe.checkout.sessions.retrieve(sessionId)
 
     if (session.payment_status !== 'paid') {
       throw new Error('Pagamento não confirmado')
@@ -207,9 +213,9 @@ export class PagamentosService {
       }),
     ])
 
-    const receitaBruta = recebido._sum.valor ?? 0
-    const receitaAnt = recebidoAnt._sum.valor ?? 0
-    const inadimplencia = (vencido._sum.valor ?? 0) + (pendente._sum.valor ?? 0)
+    const receitaBruta = Number(recebido._sum.valor ?? 0)
+    const receitaAnt = Number(recebidoAnt._sum.valor ?? 0)
+    const inadimplencia = Number(vencido._sum.valor ?? 0) + Number(pendente._sum.valor ?? 0)
     const variacaoMoM =
       receitaAnt > 0 ? ((receitaBruta - receitaAnt) / receitaAnt) * 100 : 0
 
@@ -219,9 +225,9 @@ export class PagamentosService {
       receitaAnt,
       variacaoMoM: Number(variacaoMoM.toFixed(2)),
       qtdRecebidos: recebido._count,
-      pendente: pendente._sum.valor ?? 0,
+      pendente: Number(pendente._sum.valor ?? 0),
       qtdPendente: pendente._count,
-      vencido: vencido._sum.valor ?? 0,
+      vencido: Number(vencido._sum.valor ?? 0),
       qtdVencido: vencido._count,
       inadimplenciaTotal: inadimplencia,
       // Resultado líquido = receitaBruta menos custos (custos = livre, default 0)
@@ -253,7 +259,7 @@ export class PagamentosService {
     for (const p of pagos) {
       if (!p.dataPagamento) continue
       const dia = dayjs(p.dataPagamento).format('YYYY-MM-DD')
-      map.set(dia, (map.get(dia) ?? 0) + p.valor)
+      map.set(dia, (map.get(dia) ?? 0) + Number(p.valor))
     }
 
     let saldo = 0
@@ -275,12 +281,12 @@ export class PagamentosService {
     const matriculasAtivas = await prisma.matricula.findMany({
       where: {
         academiaId,
-        status: 'ATIVO',
+        status: 'ATIVA',
       },
       select: { id: true, valorPago: true, planoId: true, alunoId: true },
     })
 
-    const mrrPrevisto = matriculasAtivas.reduce((s, m) => s + (m.valorPago ?? 0), 0)
+    const mrrPrevisto = matriculasAtivas.reduce((s, m) => s + Number(m.valorPago ?? 0), 0)
     const ticketMedio =
       matriculasAtivas.length > 0 ? mrrPrevisto / matriculasAtivas.length : 0
 
@@ -290,7 +296,7 @@ export class PagamentosService {
       const key = m.planoId
       const cur = porPlano.get(key) ?? { qtd: 0, total: 0 }
       cur.qtd += 1
-      cur.total += m.valorPago ?? 0
+      cur.total += Number(m.valorPago ?? 0)
       porPlano.set(key, cur)
     }
 
@@ -367,9 +373,9 @@ export class PagamentosService {
     ])
 
     return {
-      receitaMes: receitaMes._sum.valor ?? 0,
+      receitaMes: Number(receitaMes._sum.valor ?? 0),
       inadimplentes,
-      valorPendente: pendentes._sum.valor ?? 0,
+      valorPendente: Number(pendentes._sum.valor ?? 0),
       qtdPendente: pendentes._count,
     }
   }

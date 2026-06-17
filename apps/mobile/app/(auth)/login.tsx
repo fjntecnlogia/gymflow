@@ -5,6 +5,7 @@ import {
 } from "react-native"
 import { useRouter } from "expo-router"
 import { useAuthStore } from "../../stores/auth.store"
+import { mensagemDoErro } from "../../lib/errors"
 
 export default function LoginScreen() {
   const router = useRouter()
@@ -19,8 +20,8 @@ export default function LoginScreen() {
     try {
       await login(email.trim(), senha)
       router.replace("/(tabs)")
-    } catch (err: any) {
-      Alert.alert("Erro", err.message ?? "Não foi possível fazer login")
+    } catch (err) {
+      Alert.alert("Erro", mensagemDoErro(err, "Não foi possível fazer login"))
     } finally {
       setLoading(false)
     }
@@ -33,7 +34,11 @@ export default function LoginScreen() {
           <View style={s.logoBox}>
             <Text style={s.logoLetter}>G</Text>
           </View>
-          <Text style={s.logoText}><Text style={s.logoCyan}>GYM</Text>FLOW</Text>
+          <Text style={s.logoText}>
+            <Text style={s.logoCyan}>Gym</Text>
+            <Text style={s.logoStrong}>Flow</Text>
+            <Text style={s.logoMuted}> Gestor</Text>
+          </Text>
           <Text style={s.logoSub}>Sua academia. Sob controle.</Text>
         </View>
 
@@ -66,13 +71,15 @@ export default function LoginScreen() {
             }
           </TouchableOpacity>
 
-          <Text style={s.register}>
-            Não tem conta?{" "}
-            <Text style={s.registerLink} onPress={() => router.push("/(auth)/cadastro")}>
-              Cadastre-se
-            </Text>
-          </Text>
+          <TouchableOpacity onPress={() => router.push("/(auth)/esqueci-senha")} style={s.forgotWrap}>
+            <Text style={s.forgotText}>Esqueci minha senha</Text>
+          </TouchableOpacity>
         </View>
+
+        <Text style={s.helpFooter}>
+          Ainda não tem acesso?{"\n"}
+          <Text style={s.helpFooterStrong}>Procure a recepção da sua academia.</Text>
+        </Text>
       </View>
     </KeyboardAvoidingView>
   )
@@ -89,6 +96,8 @@ const s = StyleSheet.create({
   logoLetter: { fontSize: 28, fontWeight: "900", color: "#08080F" },
   logoText: { fontSize: 24, fontWeight: "800", color: "#fff", letterSpacing: -1 },
   logoCyan: { color: "#00E5FF" },
+  logoStrong: { color: "#fff", fontWeight: "800" },
+  logoMuted: { color: "#8888AA", fontWeight: "500" },
   logoSub: { fontSize: 12, color: "#8888AA", marginTop: 4 },
   form: {
     backgroundColor: "#111119", borderRadius: 20,
@@ -104,6 +113,11 @@ const s = StyleSheet.create({
     paddingVertical: 14, alignItems: "center", marginTop: 20,
   },
   btnText: { fontSize: 15, fontWeight: "700", color: "#08080F" },
-  register: { textAlign: "center", color: "#8888AA", fontSize: 13, marginTop: 16 },
-  registerLink: { color: "#00E5FF", fontWeight: "600" },
+  forgotWrap: { marginTop: 16, paddingVertical: 8, alignItems: "center" },
+  forgotText: { color: "#00E5FF", fontSize: 13, fontWeight: "600" },
+  helpFooter: {
+    textAlign: "center", color: "#8888AA", fontSize: 12,
+    marginTop: 24, paddingHorizontal: 12, lineHeight: 18,
+  },
+  helpFooterStrong: { color: "#fff", fontWeight: "600" },
 })

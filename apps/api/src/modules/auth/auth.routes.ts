@@ -23,7 +23,7 @@ import {
   templateResetSenha,
 } from '../../integrations/email'
 
-const WEB_URL = process.env.WEB_URL ?? 'https://web-gules-phi-97.vercel.app'
+const WEB_URL = process.env.WEB_URL ?? 'https://www.gymflowgestor.com.br'
 
 // ─── Schemas Zod ────────────────────────────────────────────────────────────
 

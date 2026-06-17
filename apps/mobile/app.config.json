@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "GYMFLOW",
+    "name": "GymFlow Gestor para Alunos",
     "slug": "gymflow",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "ios": { "supportsTablet": false, "bundleIdentifier": "com.gymflow.app" },
-    "android": { "package": "com.gymflow.app", "adaptiveIcon": { "backgroundColor": "#08080F" } },
+    "ios": { "supportsTablet": false, "bundleIdentifier": "com.fjntecnologia.gymflowgestor" },
+    "android": { "package": "com.fjntecnologia.gymflowgestor", "adaptiveIcon": { "backgroundColor": "#08080F" } },
     "plugins": ["expo-router", "expo-secure-store"],
     "scheme": "gymflow",
     "extra": { "router": { "origin": false } }

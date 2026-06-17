@@ -11,3 +11,17 @@ build
 Thumbs.db
 
 .vercel
+
+# Keystores e segredos de assinatura — JAMAIS commitar
+.keys/
+*.keystore
+*.jks
+*.p12
+*.pfx
+**/android/keystore.properties
+
+# Build outputs Android
+**/android/app/build/
+**/android/build/
+**/android/.gradle/
+

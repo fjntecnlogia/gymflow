@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState, useRef } from "react"
-import { View, Text, StyleSheet, TouchableOpacity, Animated, ActivityIndicator } from "react-native"
+import { View, Text, StyleSheet, TouchableOpacity, Animated, ActivityIndicator, Image } from "react-native"
 import { useAuthStore } from "../../stores/auth.store"
 import { api } from "../../lib/api"
 
@@ -52,10 +52,11 @@ export default function QrCodeScreen() {
         {loading ? (
           <ActivityIndicator size="large" color="#00E5FF" />
         ) : qrData?.qrCode ? (
-          <View style={s.qrBox}>
-            {/* QR Code como imagem base64 */}
-            <Text style={s.qrPlaceholder}>▦</Text>
-          </View>
+          <Image
+            source={{ uri: qrData.qrCode }}
+            style={s.qrImage}
+            resizeMode="contain"
+          />
         ) : (
           <Text style={s.errorText}>Erro ao gerar QR Code</Text>
         )}
@@ -83,9 +84,8 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#08080F", alignItems: "center", paddingTop: 60, paddingHorizontal: 24 },
   title: { fontSize: 20, fontWeight: "800", color: "#fff", marginBottom: 4 },
   sub: { fontSize: 13, color: "#8888AA", marginBottom: 32 },
-  qrWrap: { width: 220, height: 220, backgroundColor: "#fff", borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 24, padding: 16 },
-  qrBox: { width: "100%", height: "100%", alignItems: "center", justifyContent: "center" },
-  qrPlaceholder: { fontSize: 140, color: "#08080F" },
+  qrWrap: { width: 240, height: 240, backgroundColor: "#fff", borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 24, padding: 12 },
+  qrImage: { width: "100%", height: "100%" },
   errorText: { color: "#FF4466", fontSize: 13 },
   alunoNome: { fontSize: 20, fontWeight: "800", color: "#00E5FF", marginBottom: 4 },
   alunoId: { fontSize: 12, color: "#8888AA", marginBottom: 16 },

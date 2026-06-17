@@ -51,13 +51,13 @@ export default function PerfilScreen() {
 
       {/* Ações */}
       <View style={s.actionsCard}>
-        <TouchableOpacity style={s.action}>
+        <TouchableOpacity style={s.action} onPress={() => Alert.alert("Em breve", "Em breve você poderá alterar sua senha direto pelo app.")}>
           <Text style={s.actionText}>📱 Alterar senha</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={s.action}>
+        <TouchableOpacity style={s.action} onPress={() => Alert.alert("Em breve", "Configurações de notificação estarão disponíveis em breve.")}>
           <Text style={s.actionText}>🔔 Notificações</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={s.action}>
+        <TouchableOpacity style={s.action} onPress={() => Alert.alert("Ajuda", "Para suporte, fale com a recepção da sua academia.")}>
           <Text style={s.actionText}>❓ Ajuda e suporte</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[s.action, s.actionLast]} onPress={handleLogout}>
@@ -65,7 +65,7 @@ export default function PerfilScreen() {
         </TouchableOpacity>
       </View>
 
-      <Text style={s.version}>GYMFLOW v1.0.0</Text>
+      <Text style={s.version}>GymFlow Gestor v1.0.0</Text>
     </ScrollView>
   )
 }
