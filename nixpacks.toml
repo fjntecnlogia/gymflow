@@ -8,4 +8,8 @@ cmds = ["cd apps/api && npm install --legacy-peer-deps"]
 cmds = ["cd apps/api && npx prisma@5 generate", "cd apps/api && npm run build"]
 
 [start]
-cmd = "node apps/api/dist/server.js"
+# Não usamos node dist/server.js porque o build (tsc) não está gerando dist/
+# de forma confiável (tsc não no PATH + "|| true" mascarando o erro).
+# tsx executa TypeScript direto em runtime. prisma db push aplica o schema
+# novo (Aluno.senhaHash, tokens) no Postgres antes do servidor subir.
+cmd = "cd apps/api && npx prisma@5 db push --accept-data-loss && npx tsx src/server.ts"
