@@ -31,8 +31,9 @@ COPY . .
 # Deps com legacy-peer-deps porque alguns pacotes (baileys etc) brigam.
 RUN npm install --legacy-peer-deps --no-audit --no-fund
 
-# Gera Prisma client (precisa só do schema)
-RUN npx prisma generate
+# Gera Prisma client (precisa só do schema).
+# Pin v5 pra evitar npx baixar v6.x do registry (incompatível com @prisma/client@^5).
+RUN npx prisma@5 generate
 
 # NOTA: NÃO usamos tsc + dist/ porque o `tsc || true` mascara erros e
 # pode deixar dist/ stale (versões antigas seguem rodando). Em vez disso,
@@ -44,5 +45,5 @@ EXPOSE 3001
 # Runtime: aplica schema no Postgres + sobe servidor via tsx.
 # --accept-data-loss é seguro: schema é gerenciado pelo Prisma e mudanças
 # são aditivas (novas tabelas/colunas, nada destrutivo).
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && npx tsx src/server.ts"]
+CMD ["sh", "-c", "npx prisma@5 db push --accept-data-loss && npx tsx src/server.ts"]
 # trigger redeploy Tue Jun  2 20:30:48 HPBC 2026

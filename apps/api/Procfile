@@ -1,1 +1,1 @@
-web: npx prisma db push --accept-data-loss && npx tsx src/server.ts
+web: npx prisma@5 db push --accept-data-loss && npx tsx src/server.ts

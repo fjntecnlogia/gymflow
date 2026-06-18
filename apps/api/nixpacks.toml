@@ -5,7 +5,7 @@ nixPkgs = ["nodejs_20"]
 cmds = ["npm install --legacy-peer-deps"]
 
 [phases.build]
-cmds = ["npx prisma generate", "npm run build"]
+cmds = ["npx prisma@5 generate", "npm run build"]
 
 [start]
-cmd = "npx prisma db push --accept-data-loss && node dist/server.js"
+cmd = "npx prisma@5 db push --accept-data-loss && node dist/server.js"
