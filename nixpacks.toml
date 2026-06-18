@@ -5,7 +5,7 @@ nixPkgs = ["nodejs_20"]
 cmds = ["cd apps/api && npm install --legacy-peer-deps"]
 
 [phases.build]
-cmds = ["cd apps/api && npx prisma generate", "cd apps/api && npm run build"]
+cmds = ["cd apps/api && npx prisma@5 generate", "cd apps/api && npm run build"]
 
 [start]
 cmd = "node apps/api/dist/server.js"
