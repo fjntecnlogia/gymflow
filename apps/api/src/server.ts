@@ -6,6 +6,7 @@ import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 
 import { authRoutes } from './modules/auth/auth.routes'
+import { alunoAuthRoutes } from './modules/auth/aluno-auth.routes'
 import { academiasRoutes } from './modules/academias/academias.routes'
 import { alunosRoutes } from './modules/alunos/alunos.routes'
 import { planosRoutes } from './modules/planos/planos.routes'
@@ -78,6 +79,7 @@ async function bootstrap() {
   }
 
   app.register(authRoutes,         { prefix: '/auth' })
+  app.register(alunoAuthRoutes,    { prefix: '/auth/aluno' })
   app.register(academiasRoutes,    { prefix: '/academias' })
   app.register(alunosRoutes,       { prefix: '/alunos' })
   app.register(planosRoutes,       { prefix: '/planos' })

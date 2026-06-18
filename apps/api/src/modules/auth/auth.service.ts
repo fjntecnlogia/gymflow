@@ -24,8 +24,18 @@ const BCRYPT_ROUNDS = 10
 const TOKEN_PRIMEIRO_ACESSO_EXPIRA_DIAS = 7
 const TOKEN_RESET_SENHA_EXPIRA_HORAS = 2
 
+/**
+ * Payload do JWT emitido pelo backend.
+ *
+ * - `usuarioId` está presente quando o token é de Usuario (dono/staff via /auth/*).
+ * - `alunoId` está presente quando o token é de Aluno (app mobile via /auth/aluno/*).
+ *
+ * Exatamente um dos dois é populado por emissão. `role` reflete o tipo:
+ * RoleUsuario pros usuários, `'ALUNO'` pros alunos.
+ */
 export type JwtPayload = {
-  usuarioId: string
+  usuarioId?: string
+  alunoId?: string
   academiaId: string
   role: string
 }

@@ -54,16 +54,16 @@ enum StatusAcademia {
 // ─── USUARIOS (Dono / Staff) ──────────────────────────
 
 model Usuario {
-  id           String      @id @default(cuid())
-  academiaId   String
+  id         String      @id @default(cuid())
+  academiaId String
   // Nullable pra retro-compat com cadastros antigos via Supabase Auth.
   // Novos usuários usam auth próprio (senhaHash + JWT do backend Fastify).
-  supabaseId   String?     @unique
-  nome         String
-  email        String
-  telefone     String?
-  role         RoleUsuario @default(STAFF)
-  ativo        Boolean     @default(true)
+  supabaseId String?     @unique
+  nome       String
+  email      String
+  telefone   String?
+  role       RoleUsuario @default(STAFF)
+  ativo      Boolean     @default(true)
 
   // ─── Auth próprio (Postgres + bcrypt + JWT) ────────────────────
   senhaHash                 String?
@@ -74,11 +74,11 @@ model Usuario {
   ultimoLoginEm             DateTime?
 
   // ─── Onboarding (tutorial primeira vez) ────────────────────────
-  onboardingConcluido       Boolean   @default(false)
-  onboardingConcluidoEm     DateTime?
+  onboardingConcluido   Boolean   @default(false)
+  onboardingConcluidoEm DateTime?
 
-  criadoEm     DateTime    @default(now())
-  atualizadoEm DateTime    @updatedAt
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
 
   academia Academia @relation(fields: [academiaId], references: [id], onDelete: Cascade)
 
@@ -109,8 +109,18 @@ model Aluno {
   qrCodeToken    String      @unique @default(cuid())
   status         StatusAluno @default(ATIVO)
   observacoes    String?
-  criadoEm       DateTime    @default(now())
-  atualizadoEm   DateTime    @updatedAt
+
+  // ─── Auth próprio (Postgres + bcrypt + JWT) ────────────────────
+  // Espelha o que Usuario tem. Aluno autentica no app mobile.
+  senhaHash                 String?
+  tokenPrimeiroAcesso       String?   @unique
+  tokenPrimeiroAcessoExpira DateTime?
+  tokenResetSenha           String?   @unique
+  tokenResetSenhaExpira     DateTime?
+  ultimoLoginEm             DateTime?
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
 
   faceRegistrada Boolean @default(false)
 
