@@ -98,7 +98,9 @@ export async function alunosRoutes(app: FastifyInstance) {
     return reply.status(200).send({ message: 'Convite enviado com sucesso' })
   })
 
-  // Resetar senha do aluno (gestor → aluno)
+  // Resetar senha do aluno (gestor → aluno).
+  // Se o aluno ainda não tem senha (nunca fez primeiro acesso), dispara
+  // automaticamente o convite de primeiro acesso. UX de um botão só.
   app.post('/:id/resetar-senha', { onRequest: [authMiddleware] }, async (req, reply) => {
     const academiaId = (req as any).academiaId
     const { id } = req.params as { id: string }
@@ -108,21 +110,34 @@ export async function alunosRoutes(app: FastifyInstance) {
     if (!aluno.email) return reply.status(400).send({ error: 'Aluno não possui e-mail cadastrado' })
 
     const academia = await prisma.academia.findUnique({ where: { id: academiaId }, select: { nome: true } })
+    const nomeAcademia = academia?.nome ?? 'sua academia'
+
     const result = await gerarTokenResetSenhaAluno(aluno.email)
-    if (!result.token) return reply.status(400).send({ error: 'Não foi possível gerar token de reset' })
 
-    const link = `${APP_ALUNO_URL}/aluno/redefinir-senha?token=${result.token}`
+    if (result.token) {
+      const link = `${APP_ALUNO_URL}/aluno/redefinir-senha?token=${result.token}`
+      await enviarEmail({
+        to: aluno.email,
+        subject: `Redefinição de senha — ${academia?.nome ?? 'GymFlow Gestor'}`,
+        html: templateResetSenhaAluno({ nomeAluno: aluno.nome, nomeAcademia, link }),
+      })
+      return reply.status(200).send({
+        tipoEnvio: 'reset',
+        message: 'E-mail de redefinição enviado com sucesso',
+      })
+    }
 
+    // Fallback: aluno ainda sem senha → manda convite de primeiro acesso
+    const tokenConvite = await gerarTokenPrimeiroAcessoAluno(id)
+    const linkConvite = `${APP_ALUNO_URL}/primeiro-acesso?token=${tokenConvite}`
     await enviarEmail({
       to: aluno.email,
-      subject: `Redefinição de senha — ${academia?.nome ?? 'GymFlow Gestor'}`,
-      html: templateResetSenhaAluno({
-        nomeAluno: aluno.nome,
-        nomeAcademia: academia?.nome ?? 'sua academia',
-        link,
-      }),
+      subject: `Seu acesso ao app — ${academia?.nome ?? 'GymFlow Gestor'}`,
+      html: templateConviteAluno({ nomeAluno: aluno.nome, nomeAcademia, link: linkConvite }),
     })
-
-    return reply.status(200).send({ message: 'E-mail de redefinição enviado com sucesso' })
+    return reply.status(200).send({
+      tipoEnvio: 'primeiro_acesso',
+      message: 'Aluno ainda não tinha senha. Enviamos um convite de primeiro acesso.',
+    })
   })
 }

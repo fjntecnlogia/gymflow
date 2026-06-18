@@ -79,10 +79,17 @@ export default function PerfilAlunoPage() {
     setResetandoSenha(true)
     setFeedbackMsg(null)
     try {
-      await api.post(`/alunos/${id}/resetar-senha`)
-      setFeedbackMsg({ tipo: 'ok', texto: 'E-mail de redefinição enviado para ' + aluno.email })
-    } catch {
-      setFeedbackMsg({ tipo: 'erro', texto: 'Falha ao enviar e-mail de redefinição' })
+      const { data } = await api.post(`/alunos/${id}/resetar-senha`)
+      const texto = data?.tipoEnvio === 'primeiro_acesso'
+        ? `Aluno ainda não tinha senha. Convite de primeiro acesso enviado para ${aluno.email}`
+        : `E-mail de redefinição enviado para ${aluno.email}`
+      setFeedbackMsg({ tipo: 'ok', texto })
+    } catch (err: any) {
+      const apiMsg = err?.response?.data?.error
+      setFeedbackMsg({
+        tipo: 'erro',
+        texto: apiMsg ? `Falha: ${apiMsg}` : 'Falha ao enviar e-mail de redefinição',
+      })
     } finally {
       setResetandoSenha(false)
     }
