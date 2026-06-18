@@ -2,9 +2,13 @@ import { FastifyInstance } from 'fastify'
 import { authMiddleware } from '../../middleware/auth.middleware'
 import { AlunosService } from './alunos.service'
 import { criarAlunoSchema, atualizarAlunoSchema, filtroAlunoSchema } from './alunos.schema'
+import { gerarTokenPrimeiroAcessoAluno, gerarTokenResetSenhaAluno } from '../auth/aluno-auth.service'
+import { enviarEmail, templateConviteAluno, templateResetSenhaAluno } from '../../integrations/email'
+import { prisma } from '../../lib/prisma'
 import QRCode from 'qrcode'
 
 const service = new AlunosService()
+const APP_ALUNO_URL = process.env.APP_ALUNO_URL ?? 'https://app.gymflowgestor.com.br'
 
 export async function alunosRoutes(app: FastifyInstance) {
   // Rota do app mobile — perfil do aluno logado
@@ -66,5 +70,59 @@ export async function alunosRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string }
     const { status } = req.body as { status: string }
     return service.atualizarStatus(academiaId, id, status)
+  })
+
+  // Enviar convite de primeiro acesso (gestor → aluno)
+  app.post('/:id/enviar-convite', { onRequest: [authMiddleware] }, async (req, reply) => {
+    const academiaId = (req as any).academiaId
+    const { id } = req.params as { id: string }
+
+    const aluno = await service.buscarPorId(academiaId, id)
+    if (!aluno) return reply.status(404).send({ error: 'Aluno não encontrado' })
+    if (!aluno.email) return reply.status(400).send({ error: 'Aluno não possui e-mail cadastrado' })
+
+    const academia = await prisma.academia.findUnique({ where: { id: academiaId }, select: { nome: true } })
+    const token = await gerarTokenPrimeiroAcessoAluno(id)
+    const link = `${APP_ALUNO_URL}/primeiro-acesso?token=${token}`
+
+    await enviarEmail({
+      to: aluno.email,
+      subject: `Seu acesso ao app — ${academia?.nome ?? 'GymFlow Gestor'}`,
+      html: templateConviteAluno({
+        nomeAluno: aluno.nome,
+        nomeAcademia: academia?.nome ?? 'sua academia',
+        link,
+      }),
+    })
+
+    return reply.status(200).send({ message: 'Convite enviado com sucesso' })
+  })
+
+  // Resetar senha do aluno (gestor → aluno)
+  app.post('/:id/resetar-senha', { onRequest: [authMiddleware] }, async (req, reply) => {
+    const academiaId = (req as any).academiaId
+    const { id } = req.params as { id: string }
+
+    const aluno = await service.buscarPorId(academiaId, id)
+    if (!aluno) return reply.status(404).send({ error: 'Aluno não encontrado' })
+    if (!aluno.email) return reply.status(400).send({ error: 'Aluno não possui e-mail cadastrado' })
+
+    const academia = await prisma.academia.findUnique({ where: { id: academiaId }, select: { nome: true } })
+    const result = await gerarTokenResetSenhaAluno(aluno.email)
+    if (!result.token) return reply.status(400).send({ error: 'Não foi possível gerar token de reset' })
+
+    const link = `${APP_ALUNO_URL}/aluno/redefinir-senha?token=${result.token}`
+
+    await enviarEmail({
+      to: aluno.email,
+      subject: `Redefinição de senha — ${academia?.nome ?? 'GymFlow Gestor'}`,
+      html: templateResetSenhaAluno({
+        nomeAluno: aluno.nome,
+        nomeAcademia: academia?.nome ?? 'sua academia',
+        link,
+      }),
+    })
+
+    return reply.status(200).send({ message: 'E-mail de redefinição enviado com sucesso' })
   })
 }

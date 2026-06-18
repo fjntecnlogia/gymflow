@@ -327,6 +327,87 @@ export function templateNovaVendaAdmin(params: {
 }
 
 /**
+ * Template: convite de primeiro acesso para aluno.
+ * O gestor envia pelo painel e o aluno recebe link para criar senha.
+ */
+export function templateConviteAluno(params: {
+  nomeAluno: string
+  nomeAcademia: string
+  link: string
+}): string {
+  const primeiro = params.nomeAluno.split(' ')[0] || params.nomeAluno
+  return wrap(
+    `
+    <p style="font-size:15px;margin:0 0 16px;">Olá, <strong>${primeiro}</strong>!</p>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">
+      Você foi cadastrado(a) na academia <strong>${params.nomeAcademia}</strong>.
+      Pra acessar o app e liberar sua entrada, clica no botão abaixo e cria sua senha:
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:24px 0;">
+      <tr><td align="center">
+        <a href="${params.link}" style="display:inline-block;background:${COR_PRIMARY};color:#0B1340;padding:16px 32px;border-radius:12px;font-weight:800;text-decoration:none;font-size:15px;">
+          Criar senha e acessar →
+        </a>
+      </td></tr>
+    </table>
+    <p style="font-size:12px;color:${COR_MUTED};margin:0 0 20px;text-align:center;">
+      Esse link funciona uma vez só e expira em 7 dias.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+      <tr><td style="padding:14px 16px;background:#F5F7FA;border-left:3px solid ${COR_PRIMARY};border-radius:6px;font-size:12px;color:${COR_MUTED};line-height:1.6;">
+        Se o botão não funcionar:<br>
+        <span style="font-family:monospace;word-break:break-all;color:${COR_TEXT};">${params.link}</span>
+      </td></tr>
+    </table>
+    <p style="font-size:12px;color:${COR_MUTED};margin:24px 0 0;">
+      <strong>Equipe ${params.nomeAcademia} · GymFlow Gestor</strong>
+    </p>
+  `,
+    `Você foi cadastrado na ${params.nomeAcademia} — crie sua senha pra acessar.`,
+  )
+}
+
+/**
+ * Template: reset de senha do aluno (disparado pelo gestor).
+ */
+export function templateResetSenhaAluno(params: {
+  nomeAluno: string
+  nomeAcademia: string
+  link: string
+}): string {
+  const primeiro = params.nomeAluno.split(' ')[0] || params.nomeAluno
+  return wrap(
+    `
+    <p style="font-size:15px;margin:0 0 16px;">Olá, <strong>${primeiro}</strong>!</p>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">
+      A academia <strong>${params.nomeAcademia}</strong> solicitou a redefinição da sua senha.
+      Clica no botão abaixo pra criar uma nova:
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:24px 0;">
+      <tr><td align="center">
+        <a href="${params.link}" style="display:inline-block;background:${COR_PRIMARY};color:#0B1340;padding:14px 28px;border-radius:12px;font-weight:800;text-decoration:none;font-size:15px;">
+          Redefinir senha →
+        </a>
+      </td></tr>
+    </table>
+    <p style="font-size:12px;color:${COR_MUTED};margin:0 0 24px;text-align:center;">
+      Esse link expira em 1 hora.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+      <tr><td style="padding:14px 16px;background:#F5F7FA;border-left:3px solid ${COR_PRIMARY};border-radius:6px;font-size:12px;color:${COR_MUTED};line-height:1.6;">
+        Se o botão não funcionar:<br>
+        <span style="font-family:monospace;word-break:break-all;color:${COR_TEXT};">${params.link}</span>
+      </td></tr>
+    </table>
+    <p style="font-size:12px;color:${COR_MUTED};margin:24px 0 0;">
+      <strong>Equipe ${params.nomeAcademia} · GymFlow Gestor</strong>
+    </p>
+  `,
+    `Redefina sua senha pra acessar a ${params.nomeAcademia}.`,
+  )
+}
+
+/**
  * Template: alerta interno ao admin de novo lead recebido.
  */
 export function templateLeadAdmin(dados: {

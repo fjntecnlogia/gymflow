@@ -4,7 +4,8 @@ import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, QrCode, Phone, Mail, User, Calendar, CreditCard,
   ShieldCheck, ShieldX, Clock, Printer, Camera, CheckCircle2,
-  XCircle, AlertCircle, UserCheck, TrendingUp, BarChart2, Flame
+  XCircle, AlertCircle, UserCheck, TrendingUp, BarChart2, Flame,
+  Send, KeyRound
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { mascaraTelefone, mascaraCPF } from '@/lib/masks'
@@ -49,6 +50,43 @@ export default function PerfilAlunoPage() {
   const [loading, setLoading] = useState(true)
   const [faceModal, setFaceModal] = useState(false)
   const [abaTela, setAbaTela] = useState<'visao-geral' | 'frequencia' | 'acessos' | 'pagamentos'>('visao-geral')
+  const [enviandoConvite, setEnviandoConvite] = useState(false)
+  const [resetandoSenha, setResetandoSenha] = useState(false)
+  const [feedbackMsg, setFeedbackMsg] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null)
+
+  async function enviarConvite() {
+    if (!aluno?.email) {
+      setFeedbackMsg({ tipo: 'erro', texto: 'Aluno sem e-mail cadastrado' })
+      return
+    }
+    setEnviandoConvite(true)
+    setFeedbackMsg(null)
+    try {
+      await api.post(`/alunos/${id}/enviar-convite`)
+      setFeedbackMsg({ tipo: 'ok', texto: 'Convite enviado para ' + aluno.email })
+    } catch {
+      setFeedbackMsg({ tipo: 'erro', texto: 'Falha ao enviar convite' })
+    } finally {
+      setEnviandoConvite(false)
+    }
+  }
+
+  async function resetarSenha() {
+    if (!aluno?.email) {
+      setFeedbackMsg({ tipo: 'erro', texto: 'Aluno sem e-mail cadastrado' })
+      return
+    }
+    setResetandoSenha(true)
+    setFeedbackMsg(null)
+    try {
+      await api.post(`/alunos/${id}/resetar-senha`)
+      setFeedbackMsg({ tipo: 'ok', texto: 'E-mail de redefinição enviado para ' + aluno.email })
+    } catch {
+      setFeedbackMsg({ tipo: 'erro', texto: 'Falha ao enviar e-mail de redefinição' })
+    } finally {
+      setResetandoSenha(false)
+    }
+  }
 
   async function carregar() {
     try {
@@ -243,6 +281,40 @@ export default function PerfilAlunoPage() {
             <Camera size={13} />
             {aluno.faceRegistrada || aluno.faceId ? '✅ Face cadastrada — atualizar' : '📷 Cadastrar Biometria Facial'}
           </button>
+
+          {/* Acesso ao App */}
+          <div className="mt-3 pt-3 border-t border-dark-border space-y-2">
+            <p className="text-[10px] text-muted uppercase tracking-wider font-semibold">Acesso ao App</p>
+            <button
+              onClick={enviarConvite}
+              disabled={enviandoConvite || !aluno.email}
+              className="w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-cyan/30 text-cyan text-xs font-semibold hover:border-cyan/60 bg-cyan/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Send size={13} />
+              {enviandoConvite ? 'Enviando...' : 'Enviar convite de acesso'}
+            </button>
+            <button
+              onClick={resetarSenha}
+              disabled={resetandoSenha || !aluno.email}
+              className="w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-orange/30 text-orange text-xs font-semibold hover:border-orange/60 bg-orange/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <KeyRound size={13} />
+              {resetandoSenha ? 'Enviando...' : 'Resetar senha'}
+            </button>
+            {!aluno.email && (
+              <p className="text-[10px] text-muted text-center">Cadastre um e-mail para habilitar</p>
+            )}
+          </div>
+
+          {feedbackMsg && (
+            <div className={`mt-2 p-2.5 rounded-xl text-xs font-medium text-center ${
+              feedbackMsg.tipo === 'ok'
+                ? 'bg-green/10 text-green border border-green/20'
+                : 'bg-red/10 text-red border border-red/20'
+            }`}>
+              {feedbackMsg.texto}
+            </div>
+          )}
         </div>
 
         {/* Stats rápidos */}
